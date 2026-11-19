@@ -1,40 +1,128 @@
+<div align="center">
+
 # Grafit
 
-A Hungarian-first, native Android KRÉTA client built with Kotlin, Jetpack Compose, and Material 3. The screen structure follows Firka with a new visual treatment and persistent appearance settings.
+**Natív Android KRÉTA-kliens, személyre szabható Material 3 felülettel.**
 
-## Current features
+Órarend, jegyek, hiányzások és iskolai teendők egy helyen.
 
-- KRÉTA-hosted sign-in with OAuth authorization code + S256 PKCE and callback state validation
-- Encrypted on-device tokens and school cache using Android Keystore, automatic refresh, and logout that clears session data
-- Home dashboard with next lesson, recent grades, daily schedule, homework, announced tests, school noticeboard, and teacher notes
-- Week navigation, lesson details, subject-filtered grades, weighted midyear averages, and absence status
-- Light, dark, and system themes, Android 12+ wallpaper colors, four accent palettes, card radius, compact density, hidden grades, and navigation visibility
-- Explicit demo mode with fictional school data, separate from real account storage
+[![Android build](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml/badge.svg)](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml)
 
-## Build
+[Letöltés](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Licenc](LICENSE.txt)
 
-Use Android Studio with JDK 17 or 21, Android SDK Platform 35, and Build Tools 35.0.0. Android 8.0 (API 26) or newer is supported.
+</div>
 
-```sh
+---
+
+## A Grafitról
+
+A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
+
+A **0.2.0 fejlesztői változat** középpontjában a személyes profil, a helyben mentett beállítások és az animált Material 3 kezelőfelület áll.
+
+## Funkciók
+
+| Terület | Lehetőségek |
+| --- | --- |
+| **Kezdőlap** | Következő tanóra, legutóbbi jegyek, napi órarend és az aktuális óra előrehaladása |
+| **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése |
+| **Jegyek** | Tantárgyi szűrés, súlyozott átlag és érintésre felfedhető értékelések |
+| **Hiányzások** | Igazolt és igazolatlan mulasztások, igazolásra váró tételek és késések |
+| **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
+| **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
+| **Megjelenés** | Világos, sötét és rendszertéma, Material You-színek, kiemelőszínek és állítható kártyák |
+| **Mozgás** | Képernyőváltási animációk, animált kártyakibontás és 60 / 120 Hz-es képfrissítési beállítás |
+| **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
+
+## Kipróbálás és telepítés
+
+**Android 8.0 vagy újabb rendszer szükséges.** A Material You háttérképhez igazodó színei Android 12-től érhetők el.
+
+1. Nyisd meg az [Android munkafolyamatot](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml).
+2. Válaszd ki a `main` ág legutóbbi sikeres futását.
+3. Töltsd le a **grafit-debug-apk** nevű csomagot az *Artifacts* részből, majd bontsd ki.
+4. Telepítsd az `app-debug.apk` fájlt a telefonodra. Az Android kérheti az adott telepítési forrás engedélyezését.
+
+Az első indításkor választhatsz a KRÉTA-fiókos bejelentkezés és a mintaadatokkal működő bemutató között. A bejelentkezési oldalon a KRÉTA saját felületén adhatod meg az intézményedet és a fiókadataidat.
+
+A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkezés és az intézményenként eltérő válaszok ellenőrzéséhez saját, jogosultan használt fiók szükséges.
+
+## Saját profil és beállítások
+
+Érintsd meg a **jobb felső sarokban lévő profilbuborékot**. A felcsúszó menüben szerkesztheted a megjelenített nevedet, választhatsz vagy eltávolíthatsz profilképet, megnyithatod a beállításokat, illetve kijelentkezhetsz.
+
+- A név a **Név mentése** gombbal menthető.
+- A kiválasztott kép középre vágott, legfeljebb 512 × 512 képpontos másolata helyben tárolódik.
+- Az egyéni profil minden KRÉTA-fiókhoz külön tartozik. A bemutató mód saját profilt használ.
+- A név, a profilkép és a megjelenési beállítások megmaradnak az alkalmazás újraindítása után.
+- Kijelentkezéskor a munkamenet és az iskolai gyorsítótár törlődik. A helyi profil ugyanazzal a fiókkal történő következő bejelentkezéskor újra betöltődik.
+
+A beállításokban módosíthatod a témát, a kiemelőszínt, a kártyák lekerekítését és sűrűségét, a jegyek láthatóságát, valamint az alsó navigáció elemeit. Az alkalmazás adatainak törlése vagy eltávolítása a helyben mentett személyre szabást is törli.
+
+### 60 vagy 120 Hz
+
+A **Beállítások → Mozgás és képfrissítés** részen választható ki a kívánt frissítési mód. A választás helyben mentődik.
+
+A 120 Hz-es módhoz megfelelő kijelző szükséges. Ha az eszköz aktuális kijelzőmódjai között elérhető a 120 Hz, a Grafit ezt kéri az Androidtól. Egyébként 60 Hz-et kér, és jelzi a korlátozást. A tényleges képfrissítést a rendszer, az energiatakarékosság és a gyártói beállítások is befolyásolhatják.
+
+## Helyi adattárolás
+
+A bejelentkezés OAuth-kódcserét, S256 PKCE-t és a visszatérési munkamenet ellenőrzését használja. A tokenek, az iskolai gyorsítótár és a személyes profil Android Keystore-kulccsal titkosítva, az alkalmazás saját tárhelyén tárolódnak. A megjelenési beállítások szintén helyben mentődnek. Az automatikus felhőmentés és az eszközök közötti adatátvitel ki van kapcsolva.
+
+Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmazás közvetlenül a KRÉTA szolgáltatásaival kommunikál. Hálózati hiba esetén az utoljára sikeresen letöltött iskolai adatok és a frissítés időpontja segítik a tájékozódást.
+
+## Fejlesztési állapot
+
+A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
+
+A 0.2.0 helyi ellenőrzése során az APK fordítása, a tíz JVM-teszt, az Android Lint és az eszköztesztek fordítása sikeres volt. A szoftveresen emulált Android rendszerhibái miatt az eszköztesztek futása a tesztek végrehajtása előtt megszakadt. A profilkezelés és az animációk működésének végső ellenőrzése valódi eszközön vagy hardveresen gyorsított emulátoron szükséges. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
+
+## Fejlesztőknek
+
+### Szükséges eszközök
+
+- Android Studio vagy Android SDK parancssori eszközök
+- JDK 17 vagy 21
+- Android SDK Platform 35 és Build Tools 35.0.0
+- A projektben rögzített Gradle 8.13 wrapper
+
+### Fordítás és ellenőrzés
+
+```bash
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-The APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. Install it on an Android device with `adb install -r app/build/outputs/apk/debug/app-debug.apk` or run the app from Android Studio. `local.properties` may specify `sdk.dir` for a local SDK. Gradle 8.13 is pinned with a distribution checksum.
+Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`.
 
-For the prepared cloud machine, first run `source scripts/cloud-env.sh`. To reinstall its toolchain and validate the project, run `bash scripts/cloud-setup.sh`.
+Csatlakoztatott telefonra vagy emulátorra telepítéshez futtasd az alábbi parancsot.
 
-Eight JVM tests cover PKCE, callback origin and state validation, text grades, weighted averages, timezone handling, and demo data. A device UI test covers demo navigation and theme selection. Build it with `./gradlew :app:assembleDebugAndroidTest` and run it on a connected device with `./gradlew :app:connectedDebugAndroidTest`.
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
 
-## Account and privacy
+Az eszköztesztek fordítása és futtatása külön is indítható.
 
-Sign in through the KRÉTA page inside a restricted HTTPS WebView. School selection is handled by that page. Grafit does not collect the account password or send credentials to a Grafit server. Tokens and cached school responses are encrypted in app-private storage, backups are disabled, and logout clears the cache and WebView cookies. Network failures retain the last successful cache and show the last synchronization time. The timetable downloads a 15-day window around the selected day. An expired session can be reauthenticated from the error banner.
+```bash
+./gradlew :app:assembleDebugAndroidTest
+./gradlew :app:connectedDebugAndroidTest
+```
 
-Wear OS is outside the project scope.
+A JVM-tesztek a PKCE-képzést, a bejelentkezési visszatérés ellenőrzését, a KRÉTA-adatfeldolgozást, az átlagokat, az időzónát és a helyi profil formátumát ellenőrzik. Az eszköztesztek a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
 
-## First-version boundaries
+A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t.
 
-One account is active at a time. This version reads homework, tests, and the school noticeboard. Homework submission, attachments, e-ügyintézés messaging, push notifications, home-screen widgets, and multi-account switching are pending. Grade averages include numeric marks with a positive KRÉTA weight, weighted by that percentage. Real login and school-specific response compatibility require validation with an authorized account on a device. Demo data does not validate the live service.
+A projekt előkészített felhőkörnyezetében a parancsok előtt futtasd a `source scripts/cloud-env.sh` utasítást. A környezet eszközeinek újratelepítését és ellenőrzését a `bash scripts/cloud-setup.sh` végzi.
 
-## License and upstream
+## Hibajelentés
 
-Adapted from [Firka by QwIT Development and contributors](https://github.com/QwIT-Development/firka). See [ATTRIBUTION.md](ATTRIBUTION.md) and [LICENSE.txt](LICENSE.txt). CC BY-NC-SA 4.0 includes noncommercial and share-alike conditions. Grafit is an independent client.
+Hibát vagy ötletet a [GitHub Issues](https://github.com/VKornel1031/Grafit-/issues) oldalon jelezhetsz. Add meg az alkalmazás és az Android verzióját, az eszköz típusát, valamint a hiba előidézésének lépéseit. A csatolt képernyőképekről és naplókból távolítsd el a személyes és bejelentkezési adatokat.
+
+## Köszönet és licenc
+
+A Grafit KRÉTA-integrációja és navigációs felépítése a **QwIT Development és a Firka közreműködőinek** munkájára épül. A Kotlin-megvalósítás, a Material 3 felület és a helyi profilkezelés a Grafit saját adaptációja.
+
+A projekt **Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International**, azaz **CC BY-NC-SA 4.0** licenc alatt érhető el. A felhasználásra a névfeltüntetés, a nem kereskedelmi célú használat és az azonos licenc alatti továbbadás feltételei vonatkoznak.
+
+A Grafit független alkalmazás. A KRÉTA és E-KRÉTA megnevezések a megfelelő jogosultakhoz tartoznak.
+
+[Firka forráskód](https://github.com/QwIT-Development/firka) · [Forrásmegjelölés](ATTRIBUTION.md) · [Teljes licenc](LICENSE.txt)

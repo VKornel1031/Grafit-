@@ -1,0 +1,45 @@
+package hu.grafit.data
+
+import org.junit.Assert.*
+import org.junit.Test
+import org.json.JSONObject
+
+class KretaProtocolTest {
+    @Test fun pkceMatchesRfc7636() {
+        assertEquals("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", OAuth.challenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"))
+    }
+    @Test fun callbackRequiresExactOriginAndState() {
+        assertNull(OAuth.callbackCode("https://attacker.example/ellenorzo-student/prod/oauthredirect?code=abc&state=state", "state"))
+        assertNull(OAuth.callbackCode("http://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect?code=abc&state=state", "state"))
+        assertEquals("abc", OAuth.callbackCode("${OAuth.redirect}?code=abc&state=state", "state"))
+    }
+    @Test(expected = IllegalArgumentException::class) fun callbackRejectsForgedState() {
+        OAuth.callbackCode("${OAuth.redirect}?code=abc&state=forged", "state")
+    }
+    @Test(expected = IllegalArgumentException::class) fun callbackRejectsMissingCode() {
+        OAuth.callbackCode("${OAuth.redirect}?error=access_denied&state=state", "state")
+    }
+    @Test fun gradeHandlesTextAndNullFields() {
+        val grade = Grade.parse(JSONObject("""{"Uid":"1","Tantargy":{"Nev":"Magatartás"},"SzamErtek":null,"SzovegesErtek":"Példás","Tema":null}"""))
+        assertNull(grade.number)
+        assertEquals("Példás", grade.value)
+        assertEquals("", grade.topic)
+        assertNull(average(listOf(grade)))
+    }
+    @Test fun averageUsesWeightsAndOnlyMidyearGrades() {
+        fun grade(n: Int, weight: Int, type: String = "EvkoziJegyErtekeles") = Grade("1", "Math", "$n", n, weight, "", "", "", type)
+        assertEquals(4.333333, average(listOf(grade(5, 200), grade(3, 100), grade(1, 0, "FeleviJegyErtekeles")))!!, .00001)
+        assertNull(average(listOf(grade(5, 0))))
+    }
+    @Test fun timezoneConvertsUtcToHungarianTime() {
+        assertEquals("2026-01-05T09:00", localTime("2026-01-05T08:00:00Z").toString())
+        assertEquals("2026-07-05T10:00", localTime("2026-07-05T08:00:00Z").toString())
+    }
+    @Test fun demoIncludesEveryCoreSection() {
+        val data = SchoolData.demo()
+        assertTrue(data.grades.isNotEmpty())
+        assertTrue(data.lessons.isNotEmpty())
+        assertTrue(data.absences.isNotEmpty())
+        assertTrue(average(data.grades)!! in 1.0..5.0)
+    }
+}

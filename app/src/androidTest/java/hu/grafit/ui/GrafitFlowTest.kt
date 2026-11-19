@@ -21,9 +21,36 @@ class GrafitFlowTest {
         compose.onNodeWithText("Jegyeid").assertIsDisplayed()
         compose.onNodeWithText("Hiányzások").performClick()
         compose.onNodeWithText("Igazolatlan").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Megjelenés és beállítások").performClick()
+        compose.onNodeWithContentDescription("Profil megnyitása").performClick()
+        compose.onNodeWithText("Beállítások").performClick()
         compose.onNodeWithText("Legyen a tiéd.").assertIsDisplayed()
         compose.onNodeWithText("Sötét").performClick()
         compose.onNodeWithText("Sötét").assertIsSelected()
+    }
+
+    @Test fun profileNameAndSettingsSurviveRecreation() {
+        val vm = GrafitViewModel(compose.activity.application)
+        val profiles = hu.grafit.data.ProfileStore(compose.activity.application)
+        val original = profiles.read("demo")
+        val appearance = vm.appearance
+        try {
+            compose.setContent { GrafitApp(vm) }
+            compose.onNodeWithText("Kipróbálom mintaadatokkal").performClick()
+            compose.onNodeWithContentDescription("Profil megnyitása").performClick()
+            compose.onNodeWithText("Megjelenített név").performTextReplacement("Teszt Elek")
+            compose.onNodeWithText("Név mentése").performScrollTo().performClick()
+            compose.waitUntil(timeoutMillis = 15_000) { !vm.busy && vm.profile.displayName == "Teszt Elek" }
+            compose.runOnIdle {
+                vm.customize(vm.appearance.copy(mode = "dark", refreshRate = 60))
+                val restored = GrafitViewModel(compose.activity.application)
+                restored.startDemo()
+                org.junit.Assert.assertEquals("Teszt Elek", restored.profile.displayName)
+                org.junit.Assert.assertEquals("dark", restored.appearance.mode)
+                org.junit.Assert.assertEquals(60, restored.appearance.refreshRate)
+            }
+        } finally {
+            profiles.save("demo", original)
+            compose.runOnIdle { vm.customize(appearance) }
+        }
     }
 }

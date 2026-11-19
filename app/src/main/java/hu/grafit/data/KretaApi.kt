@@ -39,6 +39,12 @@ object OAuth {
         return uri.queryParameter("code")?.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("A bejelentkezés megszakadt. Próbáld újra.")
     }
+    fun accountKey(idToken: String): String {
+        val claims = JSONObject(String(Base64.getUrlDecoder().decode(idToken.split('.')[1]), Charsets.UTF_8))
+        val user = claims.text("kreta:institute_user_id").ifBlank { claims.text("sub") }
+        require(user.isNotBlank()) { "Hiányzó fiókazonosító." }
+        return institute(idToken) + ":" + user
+    }
     fun institute(idToken: String): String {
         val claims = JSONObject(String(Base64.getUrlDecoder().decode(idToken.split('.')[1]), Charsets.UTF_8))
         return claims.getString("kreta:institute_code").also {
@@ -56,6 +62,13 @@ class KretaApi(private val store: SecureStore) {
     private val userAgent = "hu.ekreta.student/5.15.0/${Build.MODEL}/${Build.VERSION.RELEASE}/${Build.VERSION.SDK_INT}"
     private val http = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS).followRedirects(false).build()
+    val profileKey: String?
+        get() = store.read("session")?.let { saved ->
+            val session = JSONObject(saved)
+            session.text("profile_key").ifBlank {
+                OAuth.accountKey(session.getString("id_token"))
+            }
+        }
     val signedIn: Boolean get() = store.read("session") != null
     fun cached(): SchoolData? = store.read("school")?.let { runCatching { SchoolData.parse(JSONObject(it)) }.getOrNull() }
     private fun token(form: FormBody): JSONObject = http.newCall(Request.Builder().url(OAuth.tokenUrl)
@@ -68,13 +81,14 @@ class KretaApi(private val store: SecureStore) {
             .add("code", code).add("code_verifier", verifier).add("redirect_uri", OAuth.redirect).build())
         val institute = OAuth.institute(response.getString("id_token"))
         response.put("institute", institute).put("expires_at", System.currentTimeMillis() + response.getLong("expires_in") * 1000)
+        response.put("profile_key", OAuth.accountKey(response.getString("id_token")))
         store.clear()
         store.write("session", response.toString())
     }
     private fun refresh(session: JSONObject): JSONObject {
         val response = token(FormBody.Builder().add("client_id", OAuth.clientId).add("grant_type", "refresh_token")
             .add("refresh_token", session.getString("refresh_token")).add("institute_code", session.getString("institute")).build())
-        response.put("institute", session.getString("institute"))
+        response.put("profile_key", profileKey).put("institute", session.getString("institute"))
             .put("expires_at", System.currentTimeMillis() + response.getLong("expires_in") * 1000)
         if (!response.has("refresh_token")) response.put("refresh_token", session.getString("refresh_token"))
         store.write("session", response.toString())

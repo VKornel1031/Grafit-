@@ -11,8 +11,8 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Tokens and school data stay in app-private storage, encrypted using Android Keystore. */
-class SecureStore(context: Context) {
-    private val prefs = context.getSharedPreferences("grafit_private", Context.MODE_PRIVATE)
+class SecureStore(context: Context, preferencesName: String = "grafit_private") {
+    private val prefs = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
     private val key: SecretKey by lazy {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getKey("grafit_storage", null) as? SecretKey) ?: KeyGenerator.getInstance(

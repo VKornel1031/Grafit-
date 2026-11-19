@@ -6,6 +6,14 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -30,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import hu.grafit.data.*
+import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -46,6 +56,7 @@ private enum class Page(val title: String, val icon: ImageVector) {
 @Composable
 fun GrafitApp(vm: GrafitViewModel) {
     val a = vm.appearance
+    ApplyRefreshRate(a.refreshRate)
     val context = LocalContext.current
     val dark = a.mode == "dark" || (a.mode == "system" && isSystemInDarkTheme())
     val colors = if (a.dynamic && Build.VERSION.SDK_INT >= 31) {
@@ -66,6 +77,7 @@ private fun AppContent(vm: GrafitViewModel) {
     var page by rememberSaveable { mutableStateOf(Page.Home) }
     var settings by rememberSaveable { mutableStateOf(false) }
     var login by rememberSaveable { mutableStateOf(false) }
+    var profileMenu by rememberSaveable { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     val active = vm.signedIn || vm.demo
     LaunchedEffect(active) { if (active) login = false }
@@ -85,11 +97,11 @@ private fun AppContent(vm: GrafitViewModel) {
             }, actions = {
                 if (active && !settings && !login) {
                     IconButton(onClick = vm::reload, enabled = !vm.busy) { Icon(Icons.Outlined.Refresh, "Frissítés") }
-                    IconButton(onClick = { settings = true }) { Icon(Icons.Outlined.Tune, "Megjelenés és beállítások") }
+                    ProfileBubble(vm, profileMenu, onClick = { profileMenu = true })
                 }
             })
         }, bottomBar = {
-            if (active && !settings && !login) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+            if (active && !settings && !login) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 3.dp) {
                 Page.entries.filter { (it != Page.Grades || vm.appearance.showGrades) &&
                     (it != Page.Absences || vm.appearance.showAbsences) }.forEach { item ->
                     NavigationBarItem(selected = page == item, onClick = { page = item },
@@ -112,24 +124,38 @@ private fun AppContent(vm: GrafitViewModel) {
                     }
                 }
             }
-            when {
-                login -> LoginWebView(onCode = vm::login, onError = { login = false })
-                !active -> Welcome(vm, onLogin = { login = true })
-                settings -> Settings(vm, onLogout = { logoutDialog = true })
-                else -> {
-                    if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 20.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelMedium)
-                    when (page) {
-                        Page.Home -> Home(vm, { page = Page.Timetable }, { page = Page.Grades })
-                        Page.Timetable -> Timetable(vm)
-                        Page.Grades -> Grades(vm)
-                        Page.Absences -> Absences(vm)
+            val route = when {
+                login -> "login"
+                !active -> "welcome"
+                settings -> "settings"
+                else -> page.name
+            }
+            AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
+                transitionSpec = {
+                    (fadeIn(tween(240)) + slideInHorizontally(tween(280)) { it / 14 }) togetherWith
+                        (fadeOut(tween(140)) + slideOutHorizontally(tween(240)) { -it / 14 })
+                }) { currentRoute ->
+                when (currentRoute) {
+                    "login" -> LoginWebView(onCode = vm::login, onError = { login = false })
+                    "welcome" -> Welcome(vm, onLogin = { login = true })
+                    "settings" -> Settings(vm, onLogout = { logoutDialog = true })
+                    else -> Column(Modifier.fillMaxSize()) {
+                        if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 20.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.labelMedium)
+                        when (Page.valueOf(currentRoute)) {
+                            Page.Home -> Home(vm, { page = Page.Timetable }, { page = Page.Grades })
+                            Page.Timetable -> Timetable(vm)
+                            Page.Grades -> Grades(vm)
+                            Page.Absences -> Absences(vm)
+                        }
                     }
                 }
             }
         }
     }
+    if (profileMenu && active) ProfileMenu(vm, onDismiss = { profileMenu = false },
+        onSettings = { settings = true }, onLogout = { logoutDialog = true })
     if (logoutDialog) AlertDialog(onDismissRequest = { logoutDialog = false }, title = { Text("Kijelentkezés?") },
         text = { Text("A mentett munkamenet és az iskolai adatok törlődnek erről az eszközről.") },
         confirmButton = { TextButton(onClick = { vm.logout(); settings = false; logoutDialog = false }) { Text("Kijelentkezés") } },
@@ -177,13 +203,25 @@ private fun Empty(message: String) {
 @Composable
 private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit) {
     val data = vm.data
-    val now = LocalDateTime.now(schoolZone)
+    val now by produceState(LocalDateTime.now(schoolZone)) {
+        while (true) {
+            value = LocalDateTime.now(schoolZone)
+            delay(30_000)
+        }
+    }
     val next = data?.lessons?.firstOrNull { it.end > now && it.state != "Elmaradt" }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Heading("Szia, ${data?.student?.substringAfterLast(' ') ?: "üdv itt"}!", today().format(dateFormat).replaceFirstChar { it.uppercase(hu) }) }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), onClick = timetable) {
-                Column(Modifier.fillMaxWidth().padding(24.dp)) {
+            Heading("Szia, ${vm.profile.displayName.ifBlank { vm.displayName.substringAfterLast(' ') }}!", today().format(dateFormat).replaceFirstChar { it.uppercase(hu) })
+            if (!data?.school.isNullOrBlank()) Text(data!!.school, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        item {
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), onClick = timetable) {
+                Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(
+                    MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .55f)
+                ))).padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Schedule, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
@@ -195,6 +233,14 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
                     Text(next?.let { "${it.start.toLocalDate()} · ${it.start.format(timeFormat)}–${it.end.format(timeFormat)}" } ?: "Nincs további óra a letöltött órarendben.")
                     if (next != null) Text(listOf(next.room, next.teacher).filter { it.isNotBlank() }.joinToString(" · "),
                         Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyMedium)
+                    if (next != null && next.start < now) {
+                        val duration = java.time.Duration.between(next.start, next.end).seconds.coerceAtLeast(1)
+                        val progress = (java.time.Duration.between(next.start, now).seconds.toFloat() / duration).coerceIn(0f, 1f)
+                        Spacer(Modifier.height(20.dp))
+                        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                        Text("${java.time.Duration.between(now, next.end).toMinutes().coerceAtLeast(0)} perc az óra végéig",
+                            Modifier.padding(top = 8.dp), style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
         }
@@ -230,8 +276,11 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
 }
 @Composable
 private fun Metric(label: String, value: String, modifier: Modifier) {
-    Surface(modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+    Surface(modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f)), shadowElevation = 1.dp) {
         Column(Modifier.padding(20.dp)) {
+            Icon(Icons.Outlined.Insights, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(14.dp))
             Text(value, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Medium)
             Spacer(Modifier.height(6.dp))
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -241,7 +290,8 @@ private fun Metric(label: String, value: String, modifier: Modifier) {
 @Composable
 private fun LessonRow(lesson: Lesson, a: Appearance) {
     var expanded by remember(lesson.id) { mutableStateOf(false) }
-    Card(onClick = { expanded = !expanded }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+    Card(modifier = Modifier.animateContentSize(), onClick = { expanded = !expanded }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.width(56.dp)) {
                 Text(lesson.start.format(timeFormat), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
@@ -263,8 +313,9 @@ private fun LessonRow(lesson: Lesson, a: Appearance) {
 private fun GradeRow(grade: Grade, a: Appearance) {
     var revealed by remember(grade.id, a.hideGrades) { mutableStateOf(!a.hideGrades) }
     var expanded by remember(grade.id) { mutableStateOf(false) }
-    Card(onClick = { if (!revealed) revealed = true else expanded = !expanded },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+    Card(modifier = Modifier.animateContentSize(), onClick = { if (!revealed) revealed = true else expanded = !expanded },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
                 Text(if (revealed) grade.value else "•", Modifier.padding(horizontal = 17.dp, vertical = 10.dp), style = MaterialTheme.typography.titleLarge)
@@ -415,6 +466,18 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             Toggle("Jegyek elrejtése", a.hideGrades, { vm.customize(a.copy(hideGrades = it)) }, "Érintsd meg a jegyet a felfedéshez")
         }
         item {
+            Section("Mozgás és képfrissítés")
+            val highRefreshSupported = supports120Hz()
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = a.refreshRate == 60 || !highRefreshSupported, onClick = { vm.customize(a.copy(refreshRate = 60)) }, label = { Text("60 Hz") })
+                FilterChip(selected = a.refreshRate == 120 && highRefreshSupported, onClick = { vm.customize(a.copy(refreshRate = 120)) },
+                    enabled = highRefreshSupported, label = { Text("120 Hz") })
+            }
+            Text(if (highRefreshSupported) "A tényleges képfrissítést az Android és az energiatakarékosság is szabályozza."
+                else "Ez a kijelző jelenleg nem kínál 120 Hz-es módot. A Grafit 60 Hz-et kér.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        item {
             Section("Navigáció")
             Toggle("Jegyek az alsó sávban", a.showGrades, { vm.customize(a.copy(showGrades = it)) })
             Toggle("Hiányzások az alsó sávban", a.showAbsences, { vm.customize(a.copy(showAbsences = it)) })
@@ -425,7 +488,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.1.0") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.2.0") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

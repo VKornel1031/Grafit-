@@ -42,4 +42,19 @@ class KretaProtocolTest {
         assertTrue(data.absences.isNotEmpty())
         assertTrue(average(data.grades)!! in 1.0..5.0)
     }
+
+    @Test fun profileKeysSeparateInstitutesAndUsers() {
+        fun token(institute: String, user: String): String {
+            val claims = JSONObject().put("kreta:institute_code", institute).put("kreta:institute_user_id", user)
+            return "header." + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(claims.toString().toByteArray()) + ".signature"
+        }
+        assertEquals("school-a:123", OAuth.accountKey(token("school-a", "123")))
+        assertNotEquals(OAuth.accountKey(token("school-a", "123")), OAuth.accountKey(token("school-b", "123")))
+        assertNotEquals(OAuth.accountKey(token("school-a", "123")), OAuth.accountKey(token("school-a", "456")))
+    }
+    @Test fun localProfileRoundTripsUnicodeAndPhoto() {
+        val profile = LocalProfile("Árvíztűrő Tükörfúrógép", "encoded-photo")
+        assertEquals(profile, LocalProfile.parse(profile.json()))
+        assertEquals(LocalProfile(), LocalProfile.parse(LocalProfile().json()))
+    }
 }

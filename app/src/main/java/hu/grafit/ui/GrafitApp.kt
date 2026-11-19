@@ -1,6 +1,11 @@
 package hu.grafit.ui
 
 import android.os.Build
+import android.content.Intent
+import android.app.Activity
+import hu.grafit.KretaLoginActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -93,6 +98,20 @@ private fun AppContent(vm: GrafitViewModel) {
     var login by rememberSaveable { mutableStateOf(false) }
     var profileMenu by rememberSaveable { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val loginLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        login = false
+        if (result.resultCode == Activity.RESULT_OK) {
+            val code = result.data?.getStringExtra(KretaLoginActivity.CODE)
+            val verifier = result.data?.getStringExtra(KretaLoginActivity.VERIFIER)
+            if (!code.isNullOrBlank() && !verifier.isNullOrBlank()) vm.login(code, verifier)
+        }
+    }
+    fun openLogin() {
+        if (login) return
+        login = true
+        loginLauncher.launch(Intent(context, KretaLoginActivity::class.java))
+    }
     val active = vm.signedIn || vm.demo
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (!profileMenu && !login && !settings) vm.onResume()
@@ -135,20 +154,18 @@ private fun AppContent(vm: GrafitViewModel) {
                         Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
                         Row {
                             if (active) TextButton(onClick = vm::reload, enabled = !vm.busy) { Text("Újrapróbálás") }
-                            if (vm.signedIn) TextButton(onClick = { login = true }) { Text("Bejelentkezés újra") }
+                            if (vm.signedIn) TextButton(onClick = { openLogin() }) { Text("Bejelentkezés újra") }
                             TextButton(onClick = vm::dismissError) { Text("Bezárás") }
                         }
                     }
                 }
             }
             val route = when {
-                login -> "login"
                 !active -> "welcome"
                 settings -> "settings"
                 else -> "content"
             }
-            if (login) LoginScreen(onCode = vm::login, onClose = { login = false })
-            else AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
+            AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
                 transitionSpec = {
                     ((fadeIn(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) +
                         slideInVertically(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) { it * 4 / 100 }) togetherWith
@@ -156,7 +173,7 @@ private fun AppContent(vm: GrafitViewModel) {
                         slideOutVertically(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) { it * 4 / 100 })).using(null)
                 }) { currentRoute ->
                 when (currentRoute) {
-                    "welcome" -> Welcome(vm, onLogin = { login = true })
+                    "welcome" -> Welcome(vm, onLogin = { openLogin() })
                     "settings" -> Settings(vm, onLogout = { logoutDialog = true })
                     else -> Column(Modifier.fillMaxSize()) {
                         if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
@@ -526,7 +543,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.3.0") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.3.1") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

@@ -1,0 +1,6 @@
+<resources>
+    <item name="kreta_login_webview" type="id" />
+    <item name="kreta_login_retry" type="id" />
+    <item name="kreta_login_notice" type="id" />
+    <item name="kreta_login_progress" type="id" />
+</resources>

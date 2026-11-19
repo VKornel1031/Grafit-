@@ -54,11 +54,18 @@ class GrafitFlowTest {
         }
     }
 
-    @Test fun loginOpensBrowserWithLoadingState() {
+    @Test fun loginLaunchesNativeBrowser() {
         val vm = GrafitViewModel(compose.activity.application)
-        compose.setContent { GrafitApp(vm) }
-        compose.onNodeWithText("Bejelentkezés KRÉTA-fiókkal").performClick()
-        compose.onNodeWithText("KRÉTA bejelentkezés").assertIsDisplayed()
-        compose.onNodeWithTag("kreta-login-browser").assertIsDisplayed()
+        androidx.test.espresso.intent.Intents.init()
+        try {
+            val target = androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent(hu.grafit.KretaLoginActivity::class.java.name)
+            androidx.test.espresso.intent.Intents.intending(target)
+                .respondWith(android.app.Instrumentation.ActivityResult(android.app.Activity.RESULT_CANCELED, null))
+            compose.setContent { GrafitApp(vm) }
+            compose.onNodeWithText("Bejelentkezés KRÉTA-fiókkal").performClick()
+            androidx.test.espresso.intent.Intents.intended(target)
+        } finally {
+            androidx.test.espresso.intent.Intents.release()
+        }
     }
 }

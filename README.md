@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.2.0 fejlesztői változat** középpontjában a személyes profil, a helyben mentett beállítások és az animált Material 3 kezelőfelület áll.
+A **0.3.0 fejlesztői változat** a Firka bejelentkezési és szinkronizálási működésének natív Kotlin-adaptációjára, a helyben mentett személyes profilra és az animált Material 3 kezelőfelületre épül.
 
 ## Funkciók
 
@@ -31,7 +31,7 @@ A **0.2.0 fejlesztői változat** középpontjában a személyes profil, a helyb
 | **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
 | **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
 | **Megjelenés** | Világos, sötét és rendszertéma, Material You-színek, kiemelőszínek és állítható kártyák |
-| **Mozgás** | Képernyőváltási animációk, animált kártyakibontás és 60 / 120 Hz-es képfrissítési beállítás |
+| **Mozgás** | Lapozható fülek, Firka-alapú oldal- és órarendátmenetek, jegyfelfedés, animált kapcsolók és 60 / 120 Hz-es beállítás |
 | **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
 
 ## Kipróbálás és telepítés
@@ -46,6 +46,35 @@ A **0.2.0 fejlesztői változat** középpontjában a személyes profil, a helyb
 Az első indításkor választhatsz a KRÉTA-fiókos bejelentkezés és a mintaadatokkal működő bemutató között. A bejelentkezési oldalon a KRÉTA saját felületén adhatod meg az intézményedet és a fiókadataidat.
 
 A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkezés és az intézményenként eltérő válaszok ellenőrzéséhez saját, jogosultan használt fiók szükséges.
+
+## Bejelentkezés és szinkronizálás
+
+A bejelentkezés beágyazott Android WebView-ban, a KRÉTA saját oldalán történik. A böngésző betöltésjelzőt, hibaüzenetet és újrapróbálási lehetőséget biztosít. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
+
+A szinkronizálási folyamat a Firka kliensének működését követi.
+
+- A tanulói adatlap és az osztályok, csoportok betöltése után frissülnek a jegyek, házi feladatok, dolgozatok és üzenetek.
+- Az órarend legfeljebb 14 napos részletekben töltődik le. Az első teljes szinkron a tanévet is feldolgozza, a későbbi frissítések a gyorsítótár és az ismert tanévvégi esemény alapján szűkíthetők.
+- A kezdőlap kézi frissítése az aktuális hét és a kezdőlapon megjelenő adatok frissítését végzi. Sikertelen teljes szinkron után az újrapróbálás a teljes folyamatot ismétli.
+- Az órarendben kiválasztott nap körüli adatok külön is frissülnek.
+- A faliújság és a tanári feljegyzések időszakosan, azonosító alapján egyesítve kerülnek a helyi tárba.
+- A hiányzások az órarend után frissülnek. A digitális tantárgyak a jegyek megnyitásakor töltődnek le. A kliens az osztálycsoportok átlagainak lekérdezését is tartalmazza.
+- A sikeres részfrissítések folyamatosan mentődnek. Hiba esetén az érintett rész korábbi adatai megmaradnak, és az alkalmazás jelzi a sikertelen frissítéseket.
+
+A tokenmegújítás párhuzamos kérések esetén is sorba rendezett. Az átmeneti tokenmegújítási hibák utáni várakozás a Firka 1, 3 és 5 másodperces ütemezését követi. Az alkalmazásba visszatéréskor kétperces frissítési időköz segíti az adatok aktualizálását.
+
+### Firka-alapú animációk
+
+A natív felület a Firka mozgásainak időzítését és görbéit alkalmazza.
+
+| Művelet | Átmenet |
+| --- | --- |
+| Alsó fülek közötti váltás | 175 ms-os lapozás, vízszintes ujjmozdulattal is |
+| Oldalak megnyitása és bezárása | 300 / 250 ms-os áttűnés és finom függőleges elmozdulás |
+| Kezdőlapi adatok megjelenése | 300 ms-os beúszás és áttűnés, meleg gyorsítótár esetén azonnali megjelenítés |
+| Órarendi napváltás | Irányhelyes, 300 ms-os vízszintes átmenet |
+| Elrejtett jegy felfedése | 400 ms-os átfordulás |
+| Beállítási kapcsolók | 150 ms-os szín- és pozícióváltás |
 
 ## Saját profil és beállítások
 
@@ -75,7 +104,7 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.2.0 helyi ellenőrzése során az APK fordítása, a tíz JVM-teszt, az Android Lint és az eszköztesztek fordítása sikeres volt. A szoftveresen emulált Android rendszerhibái miatt az eszköztesztek futása a tesztek végrehajtása előtt megszakadt. A profilkezelés és az animációk működésének végső ellenőrzése valódi eszközön vagy hardveresen gyorsított emulátoron szükséges. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
+A 0.3.0 ellenőrzése során az APK fordítása, a 23 JVM-teszt, az Android Lint és az eszköztesztek fordítása sikeres volt. A szinkronizálást és a tokenmegújítást helyi HTTP-tesztszerver ellenőrzi. Az éles KRÉTA-bejelentkezés valódi fiókos és a felület eszközös ellenőrzése további validálást igényel. A felhőkörnyezet hálózati szabályzata blokkolja a KRÉTA azonosítási oldalát, a szoftveres emulátor rendszerhibái pedig megakadályozták a megbízható felületi tesztfuttatást. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 
 ## Fejlesztőknek
 
@@ -107,7 +136,7 @@ Az eszköztesztek fordítása és futtatása külön is indítható.
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-A JVM-tesztek a PKCE-képzést, a bejelentkezési visszatérés ellenőrzését, a KRÉTA-adatfeldolgozást, az átlagokat, az időzónát és a helyi profil formátumát ellenőrzik. Az eszköztesztek a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
+A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, a teljes tanévi szinkront, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
 
 A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t.
 

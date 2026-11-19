@@ -59,6 +59,7 @@ fun GrafitApp(vm: GrafitViewModel) {
     ApplyRefreshRate(a.refreshRate)
     val context = LocalContext.current
     val dark = a.mode == "dark" || (a.mode == "system" && isSystemInDarkTheme())
+    ApplySystemBars(dark)
     val colors = if (a.dynamic && Build.VERSION.SDK_INT >= 31) {
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else if (dark) darkColorScheme(primary = lerp(seeds[a.color], Color.White, .45f), primaryContainer = seeds[a.color].copy(alpha = .35f),

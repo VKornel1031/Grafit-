@@ -75,6 +75,7 @@ data class SchoolTask(val subject: String, val kind: String, val text: String, v
         fun parse(j: JSONObject) = SchoolTask(j.text("subject"), j.text("kind"), j.text("text"), j.text("date"))
         fun homework(j: JSONObject) = SchoolTask(j.subject(), "Házi feladat", j.text("Szoveg"), j.text("HataridoDatuma").take(10))
         fun exam(j: JSONObject) = SchoolTask(j.subject(), "Dolgozat", j.text("Temaja"), j.text("Datum").take(10))
+        fun note(j: JSONObject) = SchoolTask(j.text("Cim"), "Feljegyzés", j.text("Tartalom"), j.text("Datum").take(10))
         fun notice(j: JSONObject) = SchoolTask(j.text("Cim"), "Faliújság", j.text("TartalomText"), j.text("ErvenyessegKezdete").take(10))
     }
     fun json() = JSONObject().put("subject", subject).put("kind", kind).put("text", text).put("date", date)

@@ -6,7 +6,7 @@ A Hungarian-first, native Android KRÉTA client built with Kotlin, Jetpack Compo
 
 - KRÉTA-hosted sign-in with OAuth authorization code + S256 PKCE and callback state validation
 - Encrypted on-device tokens and school cache using Android Keystore, automatic refresh, and logout that clears session data
-- Home dashboard with next lesson, recent grades, daily schedule, homework, announced tests, and school noticeboard
+- Home dashboard with next lesson, recent grades, daily schedule, homework, announced tests, school noticeboard, and teacher notes
 - Week navigation, lesson details, subject-filtered grades, weighted midyear averages, and absence status
 - Light, dark, and system themes, Android 12+ wallpaper colors, four accent palettes, card radius, compact density, hidden grades, and navigation visibility
 - Explicit demo mode with fictional school data, separate from real account storage

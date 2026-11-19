@@ -1,5 +1,6 @@
 package hu.grafit.data
 
+import android.os.Build
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -52,12 +53,13 @@ class ApiFailure(val status: Int) : Exception(when(status) {
     else -> "A KRÉTA szolgáltatás nem érhető el ($status)."
 })
 class KretaApi(private val store: SecureStore) {
+    private val userAgent = "hu.ekreta.student/5.15.0/${Build.MODEL}/${Build.VERSION.RELEASE}/${Build.VERSION.SDK_INT}"
     private val http = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS).followRedirects(false).build()
     val signedIn: Boolean get() = store.read("session") != null
     fun cached(): SchoolData? = store.read("school")?.let { runCatching { SchoolData.parse(JSONObject(it)) }.getOrNull() }
     private fun token(form: FormBody): JSONObject = http.newCall(Request.Builder().url(OAuth.tokenUrl)
-        .post(form).header("User-Agent", "Grafit/0.1 Android").build()).execute().use {
+        .post(form).header("User-Agent", userAgent).build()).execute().use {
         if (!it.isSuccessful) throw ApiFailure(it.code)
         JSONObject(it.body!!.string())
     }
@@ -86,7 +88,7 @@ class KretaApi(private val store: SecureStore) {
                 .url("https://${session.getString("institute")}.e-kreta.hu/ellenorzo/v3/sajat/$endpoint")
                 .header("Authorization", "Bearer ${session.getString("access_token")}")
                 .header("apiKey", "21ff6c25-d1da-4a68-a811-c881a6057463")
-                .header("User-Agent", "Grafit/0.1 Android").build()).execute().use { it.code to (it.body?.string() ?: "") }
+                .header("User-Agent", userAgent).build()).execute().use { it.code to (it.body?.string() ?: "") }
             var result = perform()
             if (result.first == 401) { session = refresh(session); result = perform() }
             if (result.first !in 200..299) throw ApiFailure(result.first)
@@ -99,7 +101,8 @@ class KretaApi(private val store: SecureStore) {
             .put("syncedAt", System.currentTimeMillis())
         val tasks = JSONArray(request("HaziFeladatok")).objects().map(SchoolTask::homework) +
             JSONArray(request("BejelentettSzamonkeresek")).objects().map(SchoolTask::exam) +
-            JSONArray(request("FaliujsagElemek")).objects().map(SchoolTask::notice)
+            JSONArray(request("FaliujsagElemek")).objects().map(SchoolTask::notice) +
+            JSONArray(request("Feljegyzesek")).objects().map(SchoolTask::note)
         raw.put("tasks", JSONArray(tasks.map { it.json() }))
         val parsed = SchoolData.parse(raw)
         store.write("school", raw.toString())

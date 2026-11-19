@@ -53,4 +53,12 @@ class GrafitFlowTest {
             compose.runOnIdle { vm.customize(appearance) }
         }
     }
+
+    @Test fun loginOpensBrowserWithLoadingState() {
+        val vm = GrafitViewModel(compose.activity.application)
+        compose.setContent { GrafitApp(vm) }
+        compose.onNodeWithText("Bejelentkezés KRÉTA-fiókkal").performClick()
+        compose.onNodeWithText("KRÉTA bejelentkezés").assertIsDisplayed()
+        compose.onNodeWithTag("kreta-login-browser").assertIsDisplayed()
+    }
 }

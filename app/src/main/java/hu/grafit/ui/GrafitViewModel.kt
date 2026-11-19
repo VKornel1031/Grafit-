@@ -19,6 +19,8 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("appearance", 0)
     private val api = KretaApi(SecureStore(app))
     private val profiles = ProfileStore(app)
+    private var subjectsAttempted = false
+    private var lastSyncAttempt = 0L
     var profile by mutableStateOf(api.profileKey?.let(profiles::read) ?: LocalProfile())
         private set
     val displayName: String get() = profile.displayName.ifBlank { data?.student.orEmpty() }.ifBlank { "Grafit" }
@@ -33,7 +35,7 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     var busy by mutableStateOf(false); private set
     var error by mutableStateOf<String?>(null); private set
     var date by mutableStateOf(today()); private set
-    init { if (signedIn) reload() }
+    init { if (signedIn) syncAll() }
     fun customize(value: Appearance) {
         appearance = value
         prefs.edit().putString("mode", value.mode).putInt("color", value.color).putBoolean("dynamic", value.dynamic)
@@ -53,10 +55,50 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
         withContext(Dispatchers.IO) { api.login(code, verifier) }
         signedIn = true; demo = false; data = null
         profile = withContext(Dispatchers.IO) { profiles.read(profileAccount) }
-        data = withContext(Dispatchers.IO) { api.load(date) }
+        lastSyncAttempt = System.currentTimeMillis()
+        subjectsAttempted = false
+        data = withContext(Dispatchers.IO) { api.load(date, ::publishSync) }
+        showSyncIssues()
     }
-    fun reload() = work { if (!demo) data = withContext(Dispatchers.IO) { api.load(date) } }
-    fun selectDate(value: LocalDate) { date = value; if (signedIn && !demo) reload() }
+    private fun publishSync(snapshot: SchoolData) { viewModelScope.launch { data = snapshot } }
+    private fun showSyncIssues() {
+        if (api.syncIssues.isNotEmpty()) {
+            val names = api.syncIssues.take(3).joinToString(", ")
+            val remaining = if (api.syncIssues.size > 3) " és további ${api.syncIssues.size - 3}" else ""
+            error = "Néhány részfrissítés sikertelen ($names$remaining)."
+        }
+    }
+    private fun syncAll() = work {
+        lastSyncAttempt = System.currentTimeMillis()
+        subjectsAttempted = false
+        data = withContext(Dispatchers.IO) { api.load(date, ::publishSync) }
+        showSyncIssues()
+    }
+    fun reload() = work {
+        if (!demo) {
+            lastSyncAttempt = System.currentTimeMillis()
+            subjectsAttempted = false
+            data = withContext(Dispatchers.IO) {
+                if (api.syncIssues.isNotEmpty()) api.load(date, ::publishSync) else api.refreshHomeFeed(::publishSync)
+            }
+            showSyncIssues()
+        }
+    }
+    fun loadSubjects() {
+        if (demo || busy || subjectsAttempted) return
+        subjectsAttempted = true
+        work { withContext(Dispatchers.IO) { api.getSubjects() } }
+    }
+    fun onResume() {
+        if (signedIn && !demo && !busy && System.currentTimeMillis() - lastSyncAttempt >= 120_000) reload()
+    }
+    fun selectDate(value: LocalDate) {
+        if (busy) return
+        date = value
+        if (signedIn && !demo) work {
+            data = withContext(Dispatchers.IO) { api.getLessonsCovering(value, value.plusDays(14)) }
+        }
+    }
     fun startDemo() {
         if (busy) return
         demo = true; error = null; data = SchoolData.demo()

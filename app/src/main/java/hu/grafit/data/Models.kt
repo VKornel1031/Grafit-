@@ -48,9 +48,9 @@ data class SchoolData(val student: String, val school: String, val grades: List<
                       val lessons: List<Lesson>, val absences: List<Absence>, val syncedAt: Long = System.currentTimeMillis(), val tasks: List<SchoolTask> = emptyList()) {
     companion object {
         fun parse(j: JSONObject) = SchoolData(j.getJSONObject("student").text("Nev"),
-            j.getJSONObject("student").text("IntezmenyNev"), j.getJSONArray("grades").objects().map(Grade::parse),
-            j.getJSONArray("lessons").objects().map(Lesson::parse).sortedBy { it.start },
-            j.getJSONArray("absences").objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty())
+            j.getJSONObject("student").text("IntezmenyNev"), (j.optJSONArray("grades") ?: JSONArray()).objects().map(Grade::parse),
+            (j.optJSONArray("lessons") ?: JSONArray()).objects().map(Lesson::parse).sortedBy { it.start },
+            (j.optJSONArray("absences") ?: JSONArray()).objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty())
         fun demo(): SchoolData {
             val subjects = listOf("Matematika", "Magyar irodalom", "Történelem", "Angol nyelv", "Informatika")
             val date = today()

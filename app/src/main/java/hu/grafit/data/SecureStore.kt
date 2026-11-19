@@ -11,7 +11,13 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Tokens and school data stay in app-private storage, encrypted using Android Keystore. */
-class SecureStore(context: Context, preferencesName: String = "grafit_private") {
+interface StringStore {
+    fun read(name: String): String?
+    fun write(name: String, value: String)
+    fun clear()
+}
+
+class SecureStore(context: Context, preferencesName: String = "grafit_private") : StringStore {
     private val prefs = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
     private val key: SecretKey by lazy {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -22,7 +28,7 @@ class SecureStore(context: Context, preferencesName: String = "grafit_private") 
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
         }.generateKey()
     }
-    @Synchronized fun read(name: String): String? {
+    @Synchronized override fun read(name: String): String? {
         val stored = prefs.getString(name, null) ?: return null
         return runCatching {
             val parts = stored.split(":")
@@ -31,12 +37,12 @@ class SecureStore(context: Context, preferencesName: String = "grafit_private") 
             String(cipher.doFinal(Base64.decode(parts[1], Base64.NO_WRAP)), Charsets.UTF_8)
         }.getOrElse { prefs.edit().remove(name).apply(); null }
     }
-    @Synchronized fun write(name: String, value: String) {
+    @Synchronized override fun write(name: String, value: String) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val encoded = Base64.encodeToString(cipher.iv, Base64.NO_WRAP) + ":" +
             Base64.encodeToString(cipher.doFinal(value.toByteArray(Charsets.UTF_8)), Base64.NO_WRAP)
         check(prefs.edit().putString(name, encoded).commit()) { "A biztonságos mentés sikertelen." }
     }
-    @Synchronized fun clear() { check(prefs.edit().clear().commit()) }
+    @Synchronized override fun clear() { check(prefs.edit().clear().commit()) }
 }

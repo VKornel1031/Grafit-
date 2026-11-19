@@ -3,6 +3,7 @@ package hu.grafit.data
 import org.junit.Assert.*
 import org.junit.Test
 import org.json.JSONObject
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class KretaProtocolTest {
     @Test fun pkceMatchesRfc7636() {
@@ -56,5 +57,27 @@ class KretaProtocolTest {
         val profile = LocalProfile("Árvíztűrő Tükörfúrógép", "encoded-photo")
         assertEquals(profile, LocalProfile.parse(profile.json()))
         assertEquals(LocalProfile(), LocalProfile.parse(LocalProfile().json()))
+    }
+
+    @Test fun loginUrlMatchesFirkaNestedAuthorizeRequest() {
+        val login = OAuth.loginUrl("verifier", "state").toHttpUrl()
+        assertEquals("idp.e-kreta.hu", login.host)
+        assertEquals("/Account/Login", login.encodedPath)
+        val callback = ("https://idp.e-kreta.hu" + login.queryParameter("ReturnUrl")).toHttpUrl()
+        assertEquals("/connect/authorize/callback", callback.encodedPath)
+        assertEquals(OAuth.redirect, callback.queryParameter("redirect_uri"))
+        assertEquals(OAuth.clientId, callback.queryParameter("client_id"))
+        assertEquals(OAuth.challenge("verifier"), callback.queryParameter("code_challenge"))
+        assertEquals("S256", callback.queryParameter("code_challenge_method"))
+        assertEquals("state", callback.queryParameter("state"))
+        assertEquals("state", callback.queryParameter("nonce"))
+        assertTrue(callback.queryParameter("scope")!!.contains("offline_access"))
+    }
+    @Test fun loginBrowserAllowsHttpsFederationAndRejectsUnsafeSchemes() {
+        assertTrue(OAuth.isBrowserNavigationAllowed("https://idp.e-kreta.hu/Account/Login"))
+        assertTrue(OAuth.isBrowserNavigationAllowed("https://login.microsoftonline.com/tenant/oauth2/authorize"))
+        listOf("http://idp.e-kreta.hu", "javascript:alert(1)", "file:///data/data/app", "intent://login", "https://user:password@idp.e-kreta.hu").forEach {
+            assertFalse(OAuth.isBrowserNavigationAllowed(it))
+        }
     }
 }

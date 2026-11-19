@@ -1,15 +1,15 @@
 package hu.grafit.ui
 
-import android.annotation.SuppressLint
 import android.os.Build
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -18,6 +18,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,9 +39,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import hu.grafit.data.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -75,19 +81,29 @@ fun GrafitApp(vm: GrafitViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppContent(vm: GrafitViewModel) {
-    var page by rememberSaveable { mutableStateOf(Page.Home) }
+    val pager = rememberPagerState(pageCount = { Page.entries.size })
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+    val page = Page.entries[pager.targetPage]
+    fun navigate(target: Page) {
+        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        scope.launch { pager.animateScrollToPage(target.ordinal, animationSpec = tween(FirkaMotion.tabMillis, easing = FirkaMotion.easeInOut)) }
+    }
     var settings by rememberSaveable { mutableStateOf(false) }
     var login by rememberSaveable { mutableStateOf(false) }
     var profileMenu by rememberSaveable { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     val active = vm.signedIn || vm.demo
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (!profileMenu && !login && !settings) vm.onResume()
+    }
     LaunchedEffect(active) { if (active) login = false }
     LaunchedEffect(vm.appearance) {
         if ((page == Page.Grades && !vm.appearance.showGrades) ||
-            (page == Page.Absences && !vm.appearance.showAbsences)) page = Page.Home
+            (page == Page.Absences && !vm.appearance.showAbsences)) pager.scrollToPage(Page.Home.ordinal)
     }
     BackHandler(settings || login || page != Page.Home) {
-        when { settings -> settings = false; login -> login = false; else -> page = Page.Home }
+        when { settings -> settings = false; login -> login = false; else -> navigate(Page.Home) }
     }
     Scaffold(
         topBar = {
@@ -105,7 +121,7 @@ private fun AppContent(vm: GrafitViewModel) {
             if (active && !settings && !login) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 3.dp) {
                 Page.entries.filter { (it != Page.Grades || vm.appearance.showGrades) &&
                     (it != Page.Absences || vm.appearance.showAbsences) }.forEach { item ->
-                    NavigationBarItem(selected = page == item, onClick = { page = item },
+                    NavigationBarItem(selected = page == item, onClick = { navigate(item) },
                         icon = { Icon(item.icon, null) }, label = { Text(item.title) })
                 }
             }
@@ -129,26 +145,30 @@ private fun AppContent(vm: GrafitViewModel) {
                 login -> "login"
                 !active -> "welcome"
                 settings -> "settings"
-                else -> page.name
+                else -> "content"
             }
-            AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
+            if (login) LoginScreen(onCode = vm::login, onClose = { login = false })
+            else AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
                 transitionSpec = {
-                    (fadeIn(tween(240)) + slideInHorizontally(tween(280)) { it / 14 }) togetherWith
-                        (fadeOut(tween(140)) + slideOutHorizontally(tween(240)) { -it / 14 })
+                    ((fadeIn(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) +
+                        slideInVertically(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) { it * 4 / 100 }) togetherWith
+                        (fadeOut(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) +
+                        slideOutVertically(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) { it * 4 / 100 })).using(null)
                 }) { currentRoute ->
                 when (currentRoute) {
-                    "login" -> LoginWebView(onCode = vm::login, onError = { login = false })
                     "welcome" -> Welcome(vm, onLogin = { login = true })
                     "settings" -> Settings(vm, onLogout = { logoutDialog = true })
                     else -> Column(Modifier.fillMaxSize()) {
                         if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
                             .background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 20.dp, vertical = 8.dp),
                             style = MaterialTheme.typography.labelMedium)
-                        when (Page.valueOf(currentRoute)) {
-                            Page.Home -> Home(vm, { page = Page.Timetable }, { page = Page.Grades })
-                            Page.Timetable -> Timetable(vm)
-                            Page.Grades -> Grades(vm)
-                            Page.Absences -> Absences(vm)
+                        HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { it }) { index ->
+                            when (Page.entries[index]) {
+                                Page.Home -> Home(vm, { navigate(Page.Timetable) }, { navigate(Page.Grades) })
+                                Page.Timetable -> Timetable(vm)
+                                Page.Grades -> Grades(vm)
+                                Page.Absences -> Absences(vm)
+                            }
                         }
                     }
                 }
@@ -211,6 +231,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         }
     }
     val next = data?.lessons?.firstOrNull { it.end > now && it.state != "Elmaradt" }
+    FirkaLoadedContent(loaded = data != null) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Heading("Szia, ${vm.profile.displayName.ifBlank { vm.displayName.substringAfterLast(' ') }}!", today().format(dateFormat).replaceFirstChar { it.uppercase(hu) })
@@ -271,8 +292,13 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         val lessons = data?.lessons.orEmpty().filter { it.start.toLocalDate() == today() }
         if (lessons.isEmpty()) item { Empty("Erre a napra nincs tanóra.") }
         items(lessons) { LessonRow(it, vm.appearance) }
-        item { Text(data?.let { "${it.school}\nUtolsó frissítés · ${java.time.Instant.ofEpochMilli(it.syncedAt).atZone(schoolZone).format(DateTimeFormatter.ofPattern("MM. dd. HH:mm"))}" } ?: "Az adatok betöltése folyamatban.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        item {
+            val syncLabel = if (data == null || data.syncedAt == 0L) "Első szinkronizálás folyamatban…"
+                else "Utolsó frissítés · ${java.time.Instant.ofEpochMilli(data.syncedAt).atZone(schoolZone).format(DateTimeFormatter.ofPattern("MM. dd. HH:mm"))}"
+            Text(listOfNotNull(data?.school, syncLabel).joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
     }
 }
 @Composable
@@ -314,12 +340,16 @@ private fun LessonRow(lesson: Lesson, a: Appearance) {
 private fun GradeRow(grade: Grade, a: Appearance) {
     var revealed by remember(grade.id, a.hideGrades) { mutableStateOf(!a.hideGrades) }
     var expanded by remember(grade.id) { mutableStateOf(false) }
+    val flip by animateFloatAsState(if (revealed) 0f else 180f,
+        tween(FirkaMotion.flipMillis, easing = FirkaMotion.easeInOut), label = "gradeReveal")
     Card(modifier = Modifier.animateContentSize(), onClick = { if (!revealed) revealed = true else expanded = !expanded },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
-                Text(if (revealed) grade.value else "•", Modifier.padding(horizontal = 17.dp, vertical = 10.dp), style = MaterialTheme.typography.titleLarge)
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer,
+                modifier = Modifier.graphicsLayer { rotationY = flip; cameraDistance = 8 * density }) {
+                Text(if (flip < 90f) grade.value else "•", Modifier.graphicsLayer { rotationY = if (flip < 90f) 0f else 180f }
+                    .padding(horizontal = 17.dp, vertical = 10.dp), style = MaterialTheme.typography.titleLarge)
             }
             Column(Modifier.padding(start = 16.dp).weight(1f)) {
                 Text(grade.subject, fontWeight = FontWeight.Medium)
@@ -334,7 +364,6 @@ private fun GradeRow(grade: Grade, a: Appearance) {
 @Composable
 private fun Timetable(vm: GrafitViewModel) {
     val date = vm.date
-    val lessons = vm.data?.lessons.orEmpty().filter { it.start.toLocalDate() == date }
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Heading("Órarend", date.format(DateTimeFormatter.ofPattern("yyyy. MMMM", hu)))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
@@ -357,14 +386,22 @@ private fun Timetable(vm: GrafitViewModel) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
-            if (lessons.isEmpty()) item { Empty("Erre a napra nincs tanóra a letöltött órarendben.") }
-            items(lessons) { LessonRow(it, vm.appearance) }
+        AnimatedContent(targetState = date, label = "timetableDate", transitionSpec = {
+            val direction = if (targetState > initialState) 1 else -1
+            (slideInHorizontally(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeInOut)) { it * direction } togetherWith
+                slideOutHorizontally(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeInOut)) { -it * direction }).using(null)
+        }) { shownDate ->
+            val shownLessons = vm.data?.lessons.orEmpty().filter { it.start.toLocalDate() == shownDate }
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+                if (shownLessons.isEmpty()) item { Empty("Erre a napra nincs tanóra a letöltött órarendben.") }
+                items(shownLessons) { LessonRow(it, vm.appearance) }
+            }
         }
     }
 }
 @Composable
 private fun Grades(vm: GrafitViewModel) {
+    LaunchedEffect(vm.busy, vm.demo) { if (!vm.busy && !vm.demo) vm.loadSubjects() }
     var subject by rememberSaveable { mutableStateOf<String?>(null) }
     val all = vm.data?.grades.orEmpty()
     val shown = all.filter { subject == null || it.subject == subject }.sortedByDescending { it.date }
@@ -415,7 +452,7 @@ private fun Toggle(title: String, checked: Boolean, onChange: (Boolean) -> Unit,
             Text(title, style = MaterialTheme.typography.bodyLarge)
             if (subtitle != null) Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onChange)
+        FirkaSwitch(label = title, checked = checked, onCheckedChange = onChange)
     }
 }
 @Composable
@@ -489,58 +526,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.2.0") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.3.0") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
-}
-
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-private fun LoginWebView(onCode: (String, String) -> Unit, onError: () -> Unit) {
-    val verifier = rememberSaveable { OAuth.random() }
-    val state = rememberSaveable { OAuth.random() }
-    var handled by rememberSaveable { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-    val webView = remember {
-        WebView(context).apply {
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = false
-            settings.allowContentAccess = false
-            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            webViewClient = object : WebViewClient() {
-                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                    if (!request.isForMainFrame) return false
-                    val uri = request.url
-                    try {
-                        val code = OAuth.callbackCode(uri.toString(), state)
-                        if (code != null) {
-                            if (!handled) { handled = true; onCode(code, verifier) }
-                            return true
-                        }
-                    } catch (e: IllegalArgumentException) { error = e.message; return true }
-                    return uri.scheme != "https" || !(uri.host == "e-kreta.hu" || uri.host?.endsWith(".e-kreta.hu") == true)
-                }
-                override fun onReceivedError(view: WebView, request: WebResourceRequest, failure: android.webkit.WebResourceError) {
-                    if (request.isForMainFrame) error = "A KRÉTA bejelentkezési oldala nem tölthető be. Ellenőrizd az internetkapcsolatot."
-                }
-                override fun onReceivedSslError(view: WebView, handler: android.webkit.SslErrorHandler, failure: android.net.http.SslError) {
-                    handler.cancel(); error = "A KRÉTA biztonsági tanúsítványa nem ellenőrizhető."
-                }
-            }
-            loadUrl(OAuth.loginUrl(verifier, state))
-        }
-    }
-    DisposableEffect(webView) { onDispose { webView.stopLoading(); webView.destroy() } }
-    Column(Modifier.fillMaxSize()) {
-        Text("Biztonságos kapcsolat · idp.e-kreta.hu", Modifier.fillMaxWidth().padding(16.dp), style = MaterialTheme.typography.labelMedium)
-        if (error != null) {
-            Text(error!!, Modifier.padding(20.dp), color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = onError) { Text("Vissza és újrapróbálás") }
-        } else if (handled) {
-            Text("Munkamenet létrehozása…", Modifier.padding(20.dp))
-            TextButton(onClick = onError) { Text("Vissza") }
-        } else AndroidView(factory = { webView }, modifier = Modifier.fillMaxSize())
-    }
 }

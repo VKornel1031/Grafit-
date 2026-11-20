@@ -163,50 +163,53 @@ private fun AppContent(vm: GrafitViewModel) {
             }
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-            vm.error?.let { error ->
-                Surface(color = MaterialTheme.colorScheme.errorContainer) {
-                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
-                        FlowRow {
-                            if (active) TextButton(onClick = vm::reload, enabled = !vm.busy) { Text("Újrapróbálás") }
-                            if (vm.signedIn && vm.authenticationRequired) TextButton(onClick = { openLogin() }, enabled = !vm.profileBusy) { Text("Bejelentkezés újra") }
-                            TextButton(onClick = vm::dismissError) { Text("Bezárás") }
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize()) {
+                vm.error?.let { error ->
+                    Surface(color = MaterialTheme.colorScheme.errorContainer) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
+                            FlowRow {
+                                if (active) TextButton(onClick = vm::reload, enabled = !vm.busy) { Text("Újrapróbálás") }
+                                if (vm.signedIn && vm.authenticationRequired) TextButton(onClick = { openLogin() }, enabled = !vm.profileBusy) { Text("Bejelentkezés újra") }
+                                TextButton(onClick = vm::dismissError) { Text("Bezárás") }
+                            }
                         }
                     }
                 }
-            }
-            val route = when {
-                !active -> "welcome"
-                settings -> "settings"
-                else -> "content"
-            }
-            AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
-                transitionSpec = {
-                    ((fadeIn(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) +
-                        slideInVertically(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) { it * 4 / 100 }) togetherWith
-                        (fadeOut(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) +
-                        slideOutVertically(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) { it * 4 / 100 })).using(null)
-                }) { currentRoute ->
-                when (currentRoute) {
-                    "welcome" -> Welcome(vm, onLogin = { openLogin() })
-                    "settings" -> Settings(vm, onLogout = { logoutDialog = true })
-                    else -> Column(Modifier.fillMaxSize()) {
-                        if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 20.dp, vertical = 8.dp),
-                            style = MaterialTheme.typography.labelMedium)
-                        HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { it }) { index ->
-                            when (Page.entries[index]) {
-                                Page.Home -> Home(vm, { navigate(Page.Timetable) }, { navigate(Page.Grades) })
-                                Page.Timetable -> Timetable(vm)
-                                Page.Grades -> Grades(vm)
-                                Page.Absences -> Absences(vm)
+                val route = when {
+                    !active -> "welcome"
+                    settings -> "settings"
+                    else -> "content"
+                }
+                AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
+                    transitionSpec = {
+                        ((fadeIn(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) +
+                            slideInVertically(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) { it * 4 / 100 }) togetherWith
+                            (fadeOut(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) +
+                            slideOutVertically(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) { it * 4 / 100 })).using(null)
+                    }) { currentRoute ->
+                    when (currentRoute) {
+                        "welcome" -> Welcome(vm, onLogin = { openLogin() })
+                        "settings" -> Settings(vm, onLogout = { logoutDialog = true })
+                        else -> Column(Modifier.fillMaxSize()) {
+                            if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.secondaryContainer).padding(horizontal = 20.dp, vertical = 8.dp),
+                                style = MaterialTheme.typography.labelMedium)
+                            HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { it }) { index ->
+                                when (Page.entries[index]) {
+                                    Page.Home -> Home(vm, { navigate(Page.Timetable) }, { navigate(Page.Grades) })
+                                    Page.Timetable -> Timetable(vm)
+                                    Page.Grades -> Grades(vm)
+                                    Page.Absences -> Absences(vm)
+                                }
                             }
                         }
                     }
                 }
             }
+            // Draw above the content without participating in its vertical layout.
+            if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
         }
     }
     if (profileMenu && active) ProfileMenu(vm, onDismiss = { profileMenu = false },

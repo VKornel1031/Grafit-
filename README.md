@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **Grafit 1.0.2** kompatibilitási csomagolást használ a korábbi éles APK telepítési hibájának kivizsgálásához. Kód- és erőforrás-zsugorítás nélkül, tömörítetlen DEX-fájlokkal, hagyományosan kibontott natív könyvtárakkal és V1/V2/V3 aláírással készül. Az alkalmazás összes funkciója és állandó kiadási kulcsa megmarad. A készülék telepítőjének hibakódja nem ismert, ezért a kompatibilitási csomag telefonos ellenőrzése szükséges.
+A **Grafit 1.0.3** újra kis méretű, optimalizált éles APK-t készít: R8-kódoptimalizálással, erőforrás-zsugorítással és DEX-tömörítéssel. Az alkalmazásfunkciók kódja változatlan. Az Android 9+ csomag ugyanazt az aláírási történetet és állandó éles kulcsot használja, amellyel az 1.0.2 telepítését a felhasználó sikeresen visszaigazolta. A frissítés a már telepített alkalmazásra telepíthető, újratelepítés nélkül.
 
 ## Funkciók
 
@@ -178,16 +178,16 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.0.2 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.0.3 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
-| Debug APK, kompatibilitási éles APK és AAB fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
+| Debug APK, optimalizált éles APK fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
 | Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és indulási konstruktor ellenőrizve |
 | JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.2 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.3 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 

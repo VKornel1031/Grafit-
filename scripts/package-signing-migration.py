@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
@@ -37,6 +38,34 @@ old_block = next((part for part in re.split(r'(?=Signer #\d+ in lineage certific
 if expected not in history or not all(value in old_block for value in (
         'Has installed data capability: true', 'Has permission capability    : true', 'Has rollback capability      : false')):
     raise SystemExit('The APK does not contain the required original-debug-to-release history.')
+config = (root / 'app/build.gradle.kts').read_text()
+minified = bool(re.search(r'\bisMinifyEnabled\s*=\s*true\b', config))
+resources_shrunk = bool(re.search(r'\bisShrinkResources\s*=\s*true\b', config))
+model_name = 'hu.grafit.ui.GrafitViewModel'
+if minified:
+    mapping = (root / 'app/build/outputs/mapping/release/mapping.txt').read_text()
+    match = re.search(r'^hu\.grafit\.ui\.GrafitViewModel -> (.+):$', mapping, re.M)
+    if not match:
+        raise SystemExit('Optimisation removed the Android ViewModel mapping.')
+    model_name = match.group(1)
+descriptor = "Class descriptor  : 'L" + model_name.replace('.', '/') + ";'"
+constructor_found = False
+with zipfile.ZipFile(target) as archive, tempfile.TemporaryDirectory() as temporary:
+    for name in archive.namelist():
+        if not re.fullmatch(r'classes[0-9]*\.dex', name):
+            continue
+        dex = Path(temporary) / name
+        dex.write_bytes(archive.read(name))
+        dump = subprocess.check_output([str(tools / 'dexdump'), str(dex)], text=True, errors='replace')
+        start = dump.find(descriptor)
+        if start >= 0:
+            body = dump[start:].split('Class #', 1)[0]
+            constructor_found = bool(re.search(
+                r"name\s*:\s*'<init>'\s+type\s*:\s*'\(Landroid/app/Application;\)V'\s+access\s*:.*PUBLIC", body))
+            break
+if not constructor_found:
+    raise SystemExit('The final APK lost the public Application constructor required at startup.')
+subprocess.run([str(tools / 'zipalign'), '-c', '4', str(target)], check=True, stdout=subprocess.DEVNULL)
 with zipfile.ZipFile(source) as original, zipfile.ZipFile(target) as migrated:
     names = {name for name in original.namelist() if not name.startswith('META-INF/')}
     if names != {name for name in migrated.namelist() if not name.startswith('META-INF/')}:
@@ -50,6 +79,7 @@ digest = hashlib.sha256(target.read_bytes()).hexdigest()
     'version': element['versionName'], 'versionCode': element['versionCode'], 'package': 'hu.grafit',
     'minSdk': 28, 'currentSignerSha256': expected, 'previousSignerSha256': old,
     'installedDataMigration': True, 'debuggable': False, 'sha256': digest,
+    'minified': minified, 'resourcesShrunk': resources_shrunk,
     'applicationPayloadUnchangedBySigning': True,
     'commit': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
 }, indent=2) + '\n')

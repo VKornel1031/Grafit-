@@ -17,8 +17,8 @@ android {
         applicationId = "hu.grafit"
         minSdk = if (signingMigration) 28 else 26
         targetSdk = 35
-        versionCode = 11
-        versionName = "1.0.2"
+        versionCode = 12
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -34,9 +34,9 @@ android {
     }
     buildTypes {
         getByName("release") {
-            // Compatibility build: retain the same application code as the working unshrunk builds.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // The install failure was a signing-key conflict; restore release optimisation.
+            isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs.findByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -44,8 +44,8 @@ android {
     packaging {
         // Extract native libraries through the traditional installer path.
         jniLibs.useLegacyPackaging = true
-        // Keep DEX stored and aligned for direct ART access on recent Android versions.
-        dex.useLegacyPackaging = false
+        // Compress the optimised DEX payload to keep the distributed APK small.
+        dex.useLegacyPackaging = true
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions {

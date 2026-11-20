@@ -19,7 +19,7 @@ Az eredeti felhőkörnyezet debug privát kulcsa és az állandó éles kulcs is
 
 A [debug-to-release.lineage](debug-to-release.lineage) nyilvános tanúsítványokat és kriptográfiai bizonyítékot tartalmaz. Nem tartalmaz privát kulcsot vagy jelszót.
 
-Az egyszeri `grafit-1.0.2-key-migration.apk` Android 9 vagy újabb rendszeren az eredeti debug aláírástól az éles aláírásig igazolja az átmenetet. A telefonon még meglévő adatok megtarthatók; a korábban törölt adatok nem állíthatók vissza. A funkciók változatlanok. Android 8-ra továbbra is a normál éles APK készül, amelyhez a régi debug változatot teljesen el kell távolítani.
+Az egyszeri `grafit-1.0.2-key-migration.apk` (és az azonos aláírási történettel készült optimalizált `grafit-1.0.3-key-migration.apk`) Android 9 vagy újabb rendszeren az eredeti debug aláírástól az éles aláírásig igazolja az átmenetet. A telefonon még meglévő adatok megtarthatók; a korábban törölt adatok nem állíthatók vissza. A funkciók változatlanok. Android 8-ra továbbra is a normál éles APK készül, amelyhez a régi debug változatot teljesen el kell távolítani.
 
 ## Előkészítés a tulajdonos saját gépén
 
@@ -36,3 +36,5 @@ Az eredeti debug privát kulcsra az átmenet bizonyítékának egyszeri elkész�
 ## Fontos korlát
 
 Az átmenet csak a fent megadott eredeti debug tanúsítványhoz készülhetett el. Ha a telefonon más kulccsal – például egy másik CI-futtatás debug kulcsával – aláírt változat maradt, az Android ezt az átmenetet helyesen elutasítja. Ilyenkor a megfelelő régi kulcs vagy a korábbi csomag teljes, minden érintett profilra kiterjedő eltávolítása szükséges. A Play Protect maradjon bekapcsolva; ez a fájl az Android szabványos, hitelesített kulcsátmeneti mechanizmusát használja.
+
+Az 1.0.2 kulcsátmeneti APK sikeres telefonos telepítését a felhasználó visszaigazolta. Az 1.0.3 ugyanazt a nyilvános lineage fájlt és éles kulcsot használja, kisebb, optimalizált alkalmazáscsomaggal.

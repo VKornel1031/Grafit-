@@ -18,19 +18,20 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.4.2 változat** egységesíti a Jegyek oldalon megjelenő tantárgyakat. Az azonos KRÉTA-azonosítóhoz tartozó eltérő nevek, valamint a kis- és nagybetűben, szóközökben vagy láthatatlan karakterekben eltérő nevek egy sorban jelennek meg, az összes hozzájuk tartozó jeggyel. Az éves átlag minden tantárgyat egyszer vesz figyelembe. A helyi profilmentés és az indításkor vagy kézzel végzett szinkron továbbra is elérhető.
+A **0.5.0 változat** az egész natív felületre érvényes témaszerkesztést, egyéni jegyszíneket, CSS-témaváltozókat és kapszula alakú eszköztárakat kínál. A kezdőlap külön jelzi, ha mára elfogytak az óráid, vagy aznap nincs tanítás. Az alkalmazás a GitHub stabil kiadásaiból képes frissítést keresni, letölteni és az Android telepítőjének átadni.
 
 ## Funkciók
 
 | Terület | Lehetőségek |
 | --- | --- |
-| **Kezdőlap** | Következő tanóra, legutóbbi jegyek, napi órarend és az aktuális óra előrehaladása |
+| **Kezdőlap** | Mai következő tanóra, óravégi és szabadnapi állapot, választható kezdőlapi elemek |
 | **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése |
 | **Jegyek** | Tantárgyi átlagok, lenyitható értékelések, éves átlag és technikumi ösztöndíjbecslés |
 | **Hiányzások** | Igazolt és igazolatlan mulasztások, igazolásra váró tételek és késések |
 | **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
 | **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
-| **Megjelenés** | Világos, sötét és rendszertéma, Material You-színek, kiemelőszínek és állítható kártyák |
+| **Megjelenés** | Teljes alkalmazástéma, CSS-változók, saját színek és jegyszínek, betűméret, betűcsalád, kapszula eszköztárak és kártyastílusok |
+| **Frissítések** | Stabil GitHub-kiadások ellenőrzése, APK-letöltés folyamatjelzővel, ellenőrzés és Android-telepítés |
 | **Mozgás** | Lapozható fülek, Firka-alapú oldal- és órarendátmenetek, jegyfelfedés, animált kapcsolók és 60 / 120 Hz-es beállítás |
 | **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
 
@@ -105,11 +106,59 @@ A becslés a jelenlegi átlagot használja. A hivatalos ösztöndíj az előző 
 
 A beállításokban módosíthatod a témát, a kiemelőszínt, a kártyák lekerekítését és sűrűségét, a jegyek láthatóságát, valamint az alsó navigáció elemeit. Az alkalmazás adatainak törlése vagy eltávolítása a helyben mentett személyre szabást is törli.
 
+### Az egész alkalmazás személyre szabása
+
+A **Beállítások** menüben minden változtatás azonnal megjelenik és helyben mentődik. A korábbi megjelenési beállításokat a frissítés automatikusan átveszi.
+
+- Kapszula alakú felső eszköztár és lebegő alsó navigáció; az alsó feliratok állandó vagy csak kijelöléskori megjelenítése.
+- Kitöltött, körvonalas vagy árnyékos kártyák, 0–40 egység közötti lekerekítéssel.
+- 85–130%-os alkalmazásbeli betűméret, letisztult, talpas vagy monospace betűcsalád. A rendszer betűméret-beállítása továbbra is érvényes.
+- Hét kiemelőpaletta, külön felületi és háttérszínek, egyenként állítható 1–5-ös jegyszínek és tiszta fekete sötét háttér.
+- Választható kezdőlapi összesítők, legutóbbi jegyek, hírek és napi órarend; kapcsolható lapváltási rezgés.
+
+Az **Egyéni CSS-téma szerkesztése** a Grafit saját CSS-változóit fordítja natív Compose-témává. Egyetlen `:root` blokk használható, `--grafit-` előtagú változókkal. A támogatott színek `#RGB` vagy `#RRGGBB` alakúak. A `radius` értékében a `px` natív, sűrűségfüggetlen felületi egységet jelent. A szerkesztő a hibás vagy nem támogatott értékeket mentés előtt jelzi. A saját színek a paletta és a Material You színeit felülírják; webes szelektorok és külső stíluslapok nem részei ennek a natív témanyelvnek.
+
+```css
+:root {
+  --grafit-primary: #6986A8;
+  --grafit-background: #17191C;
+  --grafit-surface: #1D2024;
+  --grafit-card: #25292E;
+  --grafit-on-surface: #F1F3F5;
+  --grafit-on-surface-variant: #BCC4CE;
+  --grafit-grade-1: #F58B88;
+  --grafit-grade-5: #9FD29A;
+  --grafit-radius: 28px;
+  --grafit-font-scale: 1.05;
+  --grafit-toolbar: pill;
+  --grafit-navigation: pill;
+  --grafit-card-style: outlined;
+}
+```
+
+A `font-family` értékei `sans`, `serif`, `mono`; a `toolbar` és `navigation` értékei `standard`, `pill`; a `card-style` értékei `filled`, `outlined`, `elevated`. A teljes színváltozó-lista az alkalmazás szerkesztőjében és a [ThemeCss.kt](app/src/main/java/hu/grafit/ui/ThemeCss.kt) fájlban olvasható. Az elrejtett jegyek saját színe is rejtve marad a felfedésig.
+
+### Mai órák állapota
+
+A kezdőlap csak az adott budapesti naptári nap tényleges, el nem maradt tanórái közül választ. Az utolsó óra után **Mára nincs több órád.**, tanóra nélküli napon **Ma nincsenek óráid.** jelenik meg. A következő napi órák nem fedik el ezeket az állapotokat. A jelzés a helyben tárolt órarendre támaszkodik, és a helyi óra frissítése nem indít KRÉTA-szinkront.
+
 ### 60 vagy 120 Hz
 
 A **Beállítások → Mozgás és képfrissítés** részen választható ki a kívánt frissítési mód. A választás helyben mentődik.
 
 A 120 Hz-es módhoz megfelelő kijelző szükséges. Ha az eszköz aktuális kijelzőmódjai között elérhető a 120 Hz, a Grafit ezt kéri az Androidtól. Egyébként 60 Hz-et kér, és jelzi a korlátozást. A tényleges képfrissítést a rendszer, az energiatakarékosság és a gyártói beállítások is befolyásolhatják.
+
+## Alkalmazásfrissítés GitHubról
+
+Indításkor a Grafit egyszer lekéri a tároló legújabb stabil GitHub-kiadását. Újabb, APK-t tartalmazó kiadásnál felugró ablakban megjelenik a verzió és a kiadási jegyzet. A **Letöltés és frissítés** gomb letölti és ellenőrzi az APK-t, majd megnyitja az Android telepítőjét. A folyamat megszakítható és újrapróbálható. Kézi keresés a **Beállítások → Alkalmazásfrissítések** részen indítható.
+
+Első alkalommal az Android kérheti a **Grafit → Ismeretlen alkalmazások telepítése** engedélyt. A telepítés a rendszer saját megerősítésével történik. Az alkalmazás ellenőrzi a fájlméretet, a GitHub által megadott SHA-256 összeget, ha rendelkezésre áll, a csomagazonosítót, a magasabb verziókódot és az azonos aláírókulcsot. A félbeszakadt vagy ellenőrzésen elbukott fájl nem kerül a telepítőhöz.
+
+### Kiadás előkészítése
+
+A frissítési csatornához nyilvános, stabil GitHub Release szükséges a `VKornel1031/Grafit-` tárolóban, például `v0.5.1` címkével. Csatolj hozzá egy legfeljebb 200 MiB méretű, aláírt APK-t, például `grafit-0.5.1.apk` néven. Minden kiadásban növeld a `versionCode` értékét. Az APK-t ugyanazzal a tartós kiadási kulccsal írd alá, mint a felhasználóknál telepített változatot. A GitHub Actions letölthető build-eredményei külön csatornát jelentenek; a frissítéskereső a Releases oldal APK-mellékleteit használja.
+
+A projekt a kiadási kulcsot nem tárolja a forráskódban. Az itt elkészített release APK aláíratlan, a debug APK fejlesztői tesztváltozat. Éles terjesztéshez a saját kulccsal aláírt APK-t kell a kiadáshoz csatolni. Az eltérő aláírású csomag telepítését a Grafit frissítője nem kezdeményezi.
 
 ## Helyi adattárolás
 
@@ -121,15 +170,17 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.4.2 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+A 0.5.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK és release APK fordítása | Sikeres; a debug aláírás ellenőrizve, a release APK aláíratlan |
-| JVM-tesztek | 46 sikeres teszt, tantárgy- és névváltozatok egységesítésével, átlagszámítással és a korábbi regressziós ellenőrzésekkel |
+| JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési tesztekkel |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.4.2 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.5.0 éles eszközös ellenőrzése még szükséges |
+
+A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a teljes és hiányos letöltést, az ellenőrzőösszeget és a telepítési szabályokat. Az Android telepítőjének és a telepítési engedélynek a tényleges működését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 
 A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 

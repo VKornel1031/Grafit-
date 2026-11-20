@@ -56,7 +56,7 @@ import java.util.Locale
 private val hu = Locale.forLanguageTag("hu-HU")
 private val dateFormat = DateTimeFormatter.ofPattern("MMMM d., EEEE", hu)
 private val timeFormat = DateTimeFormatter.ofPattern("HH:mm")
-private val seeds = listOf(Color(0xFF506A53), Color(0xFF51658F), Color(0xFF80547C), Color(0xFF99613D))
+private val seeds = listOf(Color(0xFF506A53), Color(0xFF51658F), Color(0xFF80547C), Color(0xFF99613D), Color(0xFF5F6368), Color(0xFF006C67), Color(0xFF8E4A5E))
 private enum class Page(val title: String, val icon: ImageVector) {
     Home("Kezdőlap", Icons.Outlined.Home), Timetable("Órarend", Icons.Outlined.CalendarMonth),
     Grades("Jegyek", Icons.Outlined.School), Absences("Hiányzások", Icons.Outlined.EventBusy)
@@ -69,15 +69,20 @@ fun GrafitApp(vm: GrafitViewModel) {
     val context = LocalContext.current
     val dark = a.mode == "dark" || (a.mode == "system" && isSystemInDarkTheme())
     ApplySystemBars(dark)
-    val colors = if (a.dynamic && Build.VERSION.SDK_INT >= 31) {
+    val baseColors = if (a.dynamic && Build.VERSION.SDK_INT >= 31) {
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else if (dark) darkColorScheme(primary = lerp(seeds[a.color], Color.White, .45f), primaryContainer = seeds[a.color].copy(alpha = .35f),
         background = Color(0xFF111510), surface = Color(0xFF111510))
     else lightColorScheme(primary = seeds[a.color], primaryContainer = seeds[a.color].copy(alpha = .17f),
         background = Color(0xFFF8FAF5), surface = Color(0xFFF8FAF5))
-    MaterialTheme(colorScheme = colors, shapes = Shapes(medium = RoundedCornerShape(a.radius.dp),
+    val tokens = remember(a.customCss) { ThemeCss.parse(a.customCss) }
+    val colors = customColors(if (dark && a.pureBlack) baseColors.copy(background = Color.Black, surface = Color.Black) else baseColors, tokens)
+    CompositionLocalProvider(LocalAppearance provides a, LocalThemeTokens provides tokens) {
+    MaterialTheme(colorScheme = colors, typography = customTypography(a), shapes = Shapes(medium = RoundedCornerShape(a.radius.dp),
         large = RoundedCornerShape(a.radius.dp), extraLarge = RoundedCornerShape((a.radius + 8).dp))) {
         Surface(Modifier.fillMaxSize()) { AppContent(vm) }
+        UpdatePrompt(vm.updates)
+    }
     }
 }
 
@@ -89,7 +94,7 @@ private fun AppContent(vm: GrafitViewModel) {
     val haptics = LocalHapticFeedback.current
     val page = Page.entries[pager.targetPage]
     fun navigate(target: Page) {
-        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        if (vm.appearance.haptics) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         scope.launch { pager.animateScrollToPage(target.ordinal, animationSpec = tween(FirkaMotion.tabMillis, easing = FirkaMotion.easeInOut)) }
     }
     var settings by rememberSaveable { mutableStateOf(false) }
@@ -121,7 +126,13 @@ private fun AppContent(vm: GrafitViewModel) {
     }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text(if (settings) "Megjelenés" else if (login) "KRÉTA bejelentkezés" else "grafit",
+            val pill = vm.appearance.pillToolbar
+            Surface(modifier = if (pill) Modifier.statusBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp) else Modifier,
+                shape = if (pill) CircleShape else RoundedCornerShape(0.dp),
+                color = if (pill) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface,
+                shadowElevation = if (pill) 2.dp else 0.dp) {
+            TopAppBar(windowInsets = if (pill) WindowInsets(0, 0, 0, 0) else TopAppBarDefaults.windowInsets,
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent), title = { Text(if (settings) "Megjelenés" else if (login) "KRÉTA bejelentkezés" else "grafit",
                 fontWeight = FontWeight.SemiBold) }, navigationIcon = {
                 if (settings || login) IconButton(onClick = { settings = false; login = false }) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Vissza") }
@@ -131,13 +142,22 @@ private fun AppContent(vm: GrafitViewModel) {
                     ProfileBubble(vm, profileMenu, onClick = { profileMenu = true })
                 }
             })
+            }
         }, bottomBar = {
-            if (active && !settings && !login) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 3.dp) {
+            if (active && !settings && !login) {
+            val pill = vm.appearance.pillNavigation
+            Surface(modifier = if (pill) Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp) else Modifier,
+                shape = if (pill) CircleShape else RoundedCornerShape(0.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+            NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
+                windowInsets = if (pill) WindowInsets(0, 0, 0, 0) else NavigationBarDefaults.windowInsets) {
                 Page.entries.filter { (it != Page.Grades || vm.appearance.showGrades) &&
                     (it != Page.Absences || vm.appearance.showAbsences) }.forEach { item ->
                     NavigationBarItem(selected = page == item, onClick = { navigate(item) },
-                        icon = { Icon(item.icon, null) }, label = { Text(item.title) })
+                        icon = { Icon(item.icon, if (!vm.appearance.navigationLabels && page != item) item.title else null) },
+                        alwaysShowLabel = vm.appearance.navigationLabels, label = { Text(item.title) })
                 }
+            }
+            }
             }
         }
     ) { padding ->
@@ -198,7 +218,7 @@ private fun AppContent(vm: GrafitViewModel) {
 @Composable
 private fun Welcome(vm: GrafitViewModel, onLogin: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp), verticalArrangement = Arrangement.Center) {
-        Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.primaryContainer) {
             Icon(Icons.Outlined.AutoStories, null, Modifier.padding(24.dp).size(48.dp), tint = MaterialTheme.colorScheme.primary)
         }
         Spacer(Modifier.height(32.dp))
@@ -242,7 +262,8 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
             delay(30_000)
         }
     }
-    val next = data?.lessons?.firstOrNull { it.end > now && it.state != "Elmaradt" }
+    val day = schoolDay(data?.lessons.orEmpty(), now)
+    val next = day.next
     FirkaLoadedContent(loaded = data != null) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
@@ -251,20 +272,24 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), onClick = timetable) {
+            GrafitCard(color = MaterialTheme.colorScheme.primaryContainer, onClick = timetable) {
                 Column(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(
                     MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = .55f)
                 ))).padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Schedule, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(if (next?.start?.isBefore(now) == true) "MOST TART" else "KÖVETKEZŐ ÓRA", style = MaterialTheme.typography.labelMedium)
+                        Text(when (day.status) {
+                            SchoolDayStatus.Ongoing -> "MOST TART"
+                            SchoolDayStatus.Upcoming -> "KÖVETKEZŐ ÓRA"
+                            SchoolDayStatus.Finished -> "MÁRA VÉGEZTÉL"
+                            SchoolDayStatus.NoClasses -> "SZABAD NAP"
+                        }, style = MaterialTheme.typography.labelMedium)
                     }
                     Spacer(Modifier.height(20.dp))
-                    Text(next?.subject ?: "Mára végeztél.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Medium)
+                    Text(next?.subject ?: if (day.status == SchoolDayStatus.NoClasses) "Ma nincsenek óráid." else "Mára nincs több órád.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Medium)
                     Spacer(Modifier.height(8.dp))
-                    Text(next?.let { "${it.start.toLocalDate()} · ${it.start.format(timeFormat)}–${it.end.format(timeFormat)}" } ?: "Nincs további óra a letöltött órarendben.")
+                    Text(next?.let { "${it.start.toLocalDate()} · ${it.start.format(timeFormat)}–${it.end.format(timeFormat)}" } ?: if (day.status == SchoolDayStatus.NoClasses) "A letöltött órarend szerint ma nincs tanítás." else "Az összes mai tanórád véget ért. Jó pihenést!")
                     if (next != null) Text(listOf(next.room, next.teacher).filter { it.isNotBlank() }.joinToString(" · "),
                         Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodyMedium)
                     if (next != null && next.start < now) {
@@ -278,21 +303,24 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
                 }
             }
         }
-        item {
+        if (vm.appearance.homeMetrics) item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Metric("Tanulmányi átlag", if (vm.appearance.hideGrades) "••" else average(data?.grades.orEmpty())?.let { "%.2f".format(hu, it) } ?: "—", Modifier.weight(1f))
-                Metric("Mai tanórák", "${data?.lessons?.count { it.start.toLocalDate() == today() } ?: 0}", Modifier.weight(1f))
+                Metric("Mai tanórák", "${day.lessons.size}", Modifier.weight(1f))
             }
         }
+        if (vm.appearance.homeGrades) {
         item { Section("Legutóbbi jegyek", "Összes", grades) }
         val recent = data?.grades.orEmpty().sortedByDescending { it.date }.take(3)
         if (recent.isEmpty()) item { Empty("Még nincsenek megjeleníthető jegyek.") }
         items(recent) { GradeRow(it, vm.appearance) }
+        }
+        if (vm.appearance.homeTasks) {
         item { Section("Teendők és hírek") }
         val tasks = data?.tasks.orEmpty().sortedByDescending { it.date }
         if (tasks.isEmpty()) item { Empty("Nincs megjeleníthető teendő vagy hír.") }
         items(tasks) { task ->
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+            GrafitCard() {
                 Column(Modifier.fillMaxWidth().padding(20.dp)) {
                     Text("${task.kind} · ${task.date}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     Text(task.subject, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
@@ -300,10 +328,13 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
                 }
             }
         }
+        }
+        if (vm.appearance.homeTimetable) {
         item { Section("A mai napod", "Órarend", timetable) }
         val lessons = data?.lessons.orEmpty().filter { it.start.toLocalDate() == today() }
         if (lessons.isEmpty()) item { Empty("Erre a napra nincs tanóra.") }
         items(lessons) { LessonRow(it, vm.appearance) }
+        }
         item {
             val syncLabel = if (data == null || data.syncedAt == 0L) "Első szinkronizálás folyamatban…"
                 else "Utolsó frissítés · ${java.time.Instant.ofEpochMilli(data.syncedAt).atZone(schoolZone).format(DateTimeFormatter.ofPattern("MM. dd. HH:mm"))}"
@@ -315,8 +346,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
 }
 @Composable
 private fun Metric(label: String, value: String, modifier: Modifier) {
-    Surface(modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f)), shadowElevation = 1.dp) {
+    GrafitCard(modifier) {
         Column(Modifier.padding(20.dp)) {
             Icon(Icons.Outlined.Insights, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(14.dp))
@@ -329,8 +359,7 @@ private fun Metric(label: String, value: String, modifier: Modifier) {
 @Composable
 private fun LessonRow(lesson: Lesson, a: Appearance) {
     var expanded by remember(lesson.id) { mutableStateOf(false) }
-    Card(modifier = Modifier.animateContentSize(), onClick = { expanded = !expanded }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
+    GrafitCard(modifier = Modifier.animateContentSize(), onClick = { expanded = !expanded }) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.width(56.dp)) {
                 Text(lesson.start.format(timeFormat), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
@@ -354,11 +383,12 @@ private fun GradeRow(grade: Grade, a: Appearance) {
     var expanded by remember(grade.id) { mutableStateOf(false) }
     val flip by animateFloatAsState(if (revealed) 0f else 180f,
         tween(FirkaMotion.flipMillis, easing = FirkaMotion.easeInOut), label = "gradeReveal")
-    Card(modifier = Modifier.animateContentSize(), onClick = { if (!revealed) revealed = true else expanded = !expanded },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
+    GrafitCard(modifier = Modifier.animateContentSize(), onClick = { if (!revealed) revealed = true else expanded = !expanded }) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.secondaryContainer,
+            val badge = if (flip < 90f) gradeContainer(grade.number) else MaterialTheme.colorScheme.secondaryContainer
+            val accent = if (flip < 90f) gradeAccent(grade.number) else null
+            Surface(shape = MaterialTheme.shapes.medium, color = badge, contentColor = contrastColor(badge),
+                border = accent?.let { BorderStroke(2.dp, it) },
                 modifier = Modifier.graphicsLayer { rotationY = flip; cameraDistance = 8 * density }) {
                 Text(if (flip < 90f) grade.value else "•", Modifier.graphicsLayer { rotationY = if (flip < 90f) 0f else 180f }
                     .padding(horizontal = 17.dp, vertical = 10.dp), style = MaterialTheme.typography.titleLarge)
@@ -405,7 +435,7 @@ private fun Timetable(vm: GrafitViewModel) {
         }) { shownDate ->
             val shownLessons = vm.data?.lessons.orEmpty().filter { it.start.toLocalDate() == shownDate }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
-                if (shownLessons.isEmpty()) item { Empty("Erre a napra nincs tanóra a letöltött órarendben.") }
+                if (shownLessons.none { it.hasSubject && it.state != "Elmaradt" }) item { Empty("Ezen a napon nincsenek tanóráid a letöltött órarend szerint.") }
                 items(shownLessons) { LessonRow(it, vm.appearance) }
             }
         }
@@ -430,9 +460,7 @@ private fun Grades(vm: GrafitViewModel) {
             val grades = summary.grades
             item(key = "subject:$name") {
                 val expanded = selectedSubject == name
-                Card(modifier = Modifier.animateItem(), onClick = { selectedSubject = if (expanded) null else name },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
+                GrafitCard(modifier = Modifier.animateItem(), onClick = { selectedSubject = if (expanded) null else name }) {
                     Row(Modifier.fillMaxWidth().padding(if (vm.appearance.compact) 12.dp else 18.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
@@ -478,8 +506,7 @@ private fun Grades(vm: GrafitViewModel) {
 
 @Composable
 private fun GradeSummaryWidget(label: String, value: String, description: String, icon: ImageVector, modifier: Modifier) {
-    Surface(modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f))) {
+    GrafitCard(modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -502,7 +529,7 @@ private fun Absences(vm: GrafitViewModel) {
         }
         if (all.isEmpty()) item { Empty("Nincsenek hiányzások.") }
         items(all.sortedByDescending { it.date }) { absence ->
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+            GrafitCard() {
                 Column(Modifier.fillMaxWidth().padding(20.dp)) {
                     Text(absence.subject, fontWeight = FontWeight.SemiBold)
                     Text("${absence.date} · ${when(absence.state) { "Igazolando" -> "Igazolásra vár"; else -> absence.state.ifBlank { "Ismeretlen állapot" } }}",
@@ -531,7 +558,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
     LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Heading("Legyen a tiéd.", "Személyre szabás") }
         item {
-            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+            GrafitCard(color = MaterialTheme.colorScheme.primaryContainer) {
                 Column(Modifier.fillMaxWidth().padding(24.dp)) {
                     Icon(Icons.Outlined.Palette, null)
                     Spacer(Modifier.height(16.dp))
@@ -551,9 +578,9 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         }
         item {
             Text("Kiemelőszín", style = MaterialTheme.typography.titleMedium)
-            Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 seeds.forEachIndexed { index, color ->
-                    val labels = listOf("Zsálya", "Kék", "Mályva", "Agyag")
+                    val labels = listOf("Zsálya", "Kék", "Mályva", "Agyag", "Grafit", "Türkiz", "Bordó")
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(onClick = { vm.customize(a.copy(color = index, dynamic = false)) }, shape = CircleShape, color = color,
                             modifier = Modifier.size(48.dp)) {
@@ -568,10 +595,11 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         }
         item {
             Text("Kártyák lekerekítése", style = MaterialTheme.typography.titleMedium)
-            Slider(value = a.radius, onValueChange = { vm.customize(a.copy(radius = it)) }, valueRange = 8f..32f, steps = 5)
+            Slider(value = a.radius, onValueChange = { vm.customize(a.copy(radius = it)) }, valueRange = 0f..40f, steps = 9)
             Toggle("Kompakt kártyák", a.compact, { vm.customize(a.copy(compact = it)) })
             Toggle("Jegyek elrejtése", a.hideGrades, { vm.customize(a.copy(hideGrades = it)) }, "Érintsd meg a jegyet a felfedéshez")
         }
+        item { AppearanceOptions(vm) }
         item {
             Section("Mozgás és képfrissítés")
             val highRefreshSupported = supports120Hz()
@@ -590,12 +618,21 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             Toggle("Hiányzások az alsó sávban", a.showAbsences, { vm.customize(a.copy(showAbsences = it)) })
         }
         item {
+            Section("Alkalmazásfrissítések")
+            Text("Telepített változat: ${vm.updates.version}")
+            OutlinedButton(onClick = { vm.updates.check(manual = true) }, enabled = !vm.updates.checking && !vm.updates.downloading) {
+                Text(if (vm.updates.checking) "Ellenőrzés…" else "GitHub-frissítés keresése")
+            }
+            vm.updates.message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Text("Indításkor egyszer ellenőrizzük a stabil GitHub-kiadásokat. A telepítéshez az Android megerősítése szükséges.", style = MaterialTheme.typography.bodySmall)
+        }
+        item {
             HorizontalDivider()
             TextButton(onClick = { about = true }) { Icon(Icons.Outlined.Info, null); Spacer(Modifier.width(10.dp)); Text("A Grafitról és a licencről") }
             TextButton(onClick = onLogout, enabled = !vm.busy && !vm.profileBusy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.2") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.5.0") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

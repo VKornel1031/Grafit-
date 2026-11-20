@@ -11,10 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
-data class Appearance(val mode: String = "system", val color: Int = 0, val dynamic: Boolean = true,
-                      val compact: Boolean = false, val hideGrades: Boolean = false,
-                      val showGrades: Boolean = true, val showAbsences: Boolean = true, val radius: Float = 24f, val refreshRate: Int = 120)
-class GrafitViewModel(app: Application) : AndroidViewModel(app) {
+class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOnStart: Boolean = true) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("appearance", 0)
     private val api = KretaApi(SecureStore(app))
     private val profiles = ProfileStore(app)
@@ -22,9 +19,9 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
         private set
     val displayName: String get() = profile.displayName.ifBlank { data?.student.orEmpty() }.ifBlank { "Grafit" }
     private val profileAccount: String get() = if (demo) "demo" else requireNotNull(api.profileKey)
-    var appearance by mutableStateOf(Appearance(prefs.getString("mode", "system")!!, prefs.getInt("color", 0),
-        prefs.getBoolean("dynamic", true), prefs.getBoolean("compact", false), prefs.getBoolean("hide", false),
-        prefs.getBoolean("grades", true), prefs.getBoolean("absences", true), prefs.getFloat("radius", 24f), prefs.getInt("refreshRate", 120)))
+    var appearance by mutableStateOf(Appearance.parse(runCatching {
+        prefs.getString("configuration", null)?.let { org.json.JSONObject(it) } ?: org.json.JSONObject(prefs.all)
+    }.getOrElse { org.json.JSONObject() }).resolveCss())
         private set
     var data by mutableStateOf(api.cached()); private set
     var signedIn by mutableStateOf(api.signedIn); private set
@@ -36,13 +33,13 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     val error: String? get() = syncOperation.error
     val profileBusy: Boolean get() = profileOperation.busy || accountChanging
     val profileError: String? get() = profileOperation.error
+    internal val updates = UpdateController(app, viewModelScope)
     var date by mutableStateOf(today()); private set
-    init { if (signedIn) syncAll() }
+    init { if (signedIn) syncAll(); if (checkUpdatesOnStart) updates.check() }
     fun customize(value: Appearance) {
-        appearance = value
-        prefs.edit().putString("mode", value.mode).putInt("color", value.color).putBoolean("dynamic", value.dynamic)
-            .putBoolean("compact", value.compact).putBoolean("hide", value.hideGrades).putBoolean("grades", value.showGrades)
-            .putBoolean("absences", value.showAbsences).putFloat("radius", value.radius).putInt("refreshRate", value.refreshRate).apply()
+        val updated = value.syncCssControls(appearance).resolveCss()
+        appearance = updated
+        prefs.edit().putString("configuration", updated.json()).apply()
     }
     private fun work(failureMessage: String = "Nem sikerült csatlakozni. Ellenőrizd a kapcsolatot, és próbáld újra.", action: suspend () -> Unit) =
         syncOperation.launch(viewModelScope, failureMessage, action)

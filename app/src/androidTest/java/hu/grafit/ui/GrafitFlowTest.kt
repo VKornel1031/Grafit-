@@ -12,7 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 class GrafitFlowTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     @Test fun demoNavigationAndCustomizationWork() {
-        val vm = GrafitViewModel(compose.activity.application)
+        val vm = GrafitViewModel(compose.activity.application, checkUpdatesOnStart = false)
         compose.setContent { GrafitApp(vm) }
         compose.onNodeWithText("Kipróbálom mintaadatokkal").performClick()
         compose.onNodeWithText("Bemutató mód · mintaadatok").assertIsDisplayed()
@@ -29,7 +29,7 @@ class GrafitFlowTest {
     }
 
     @Test fun profileNameAndSettingsSurviveRecreation() {
-        val vm = GrafitViewModel(compose.activity.application)
+        val vm = GrafitViewModel(compose.activity.application, checkUpdatesOnStart = false)
         val profiles = hu.grafit.data.ProfileStore(compose.activity.application)
         val original = profiles.read("demo")
         val appearance = vm.appearance
@@ -41,12 +41,19 @@ class GrafitFlowTest {
             compose.onNodeWithText("Név mentése").performScrollTo().performClick()
             compose.waitUntil(timeoutMillis = 15_000) { !vm.busy && vm.profile.displayName == "Teszt Elek" }
             compose.runOnIdle {
-                vm.customize(vm.appearance.copy(mode = "dark", refreshRate = 60))
-                val restored = GrafitViewModel(compose.activity.application)
+                vm.customize(vm.appearance.copy(mode = "dark", refreshRate = 60, pillToolbar = true,
+                    pillNavigation = true, cardStyle = "elevated", textScale = 1.2f,
+                    customCss = ":root { --grafit-grade-5: #12AB34; }"))
+                val restored = GrafitViewModel(compose.activity.application, checkUpdatesOnStart = false)
                 restored.startDemo()
                 org.junit.Assert.assertEquals("Teszt Elek", restored.profile.displayName)
                 org.junit.Assert.assertEquals("dark", restored.appearance.mode)
                 org.junit.Assert.assertEquals(60, restored.appearance.refreshRate)
+                org.junit.Assert.assertTrue(restored.appearance.pillToolbar)
+                org.junit.Assert.assertTrue(restored.appearance.pillNavigation)
+                org.junit.Assert.assertEquals("elevated", restored.appearance.cardStyle)
+                org.junit.Assert.assertEquals(1.2f, restored.appearance.textScale)
+                org.junit.Assert.assertEquals("#12AB34", ThemeCss.parse(restored.appearance.customCss)["grade-5"])
             }
         } finally {
             profiles.save("demo", original)
@@ -55,7 +62,7 @@ class GrafitFlowTest {
     }
 
     @Test fun loginLaunchesNativeBrowser() {
-        val vm = GrafitViewModel(compose.activity.application)
+        val vm = GrafitViewModel(compose.activity.application, checkUpdatesOnStart = false)
         androidx.test.espresso.intent.Intents.init()
         try {
             val target = androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent(hu.grafit.KretaLoginActivity::class.java.name)

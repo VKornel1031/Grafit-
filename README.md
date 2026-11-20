@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.4.0 változat** tantárgyankénti átlagokat, éves átlagot és technikumi ösztöndíjbecslést jelenít meg a Jegyek oldalon. Az új, monokróm grafithegy ikon adaptív és Android 13-tól témázható változatban is elérhető. A bejelentkezés és a Firka-alapú szinkronizálás működése változatlan.
+A **0.4.1 változat** kiszűri az ünnepnapokat és munkaszüneti napokat a tantárgyi listából, és szinkronizálás közben is engedi a helyi név és profilkép mentését. Az adatok az alkalmazás indításakor, bejelentkezés után vagy kézi frissítésre töltődnek le; a lapváltás, napválasztás és a háttérből visszatérés a gyorsítótárat használja. A tantárgyi átlagok, az ösztöndíjbecslés és a monokróm, témázható grafithegy ikon továbbra is elérhető.
 
 ## Funkciók
 
@@ -51,17 +51,17 @@ A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkez�
 
 A bejelentkezés a KRÉTA saját oldalán, külön natív Android WebView-képernyőn történik. Az oldal a betöltés közben is látható és használható. A képernyő tetején vékony folyamatjelző, visszalépési és újratöltési gomb segíti a navigációt. Lassú betöltés, hálózati hiba vagy hiányzó Android WebView esetén az alkalmazás hibaüzenetet jelenít meg. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
 
-A szinkronizálási folyamat a Firka kliensének működését követi.
+A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Automatikus szinkron csak az alkalmazás indításakor és sikeres bejelentkezés után fut. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a lapváltás nem indít hálózati adatlekérést.
 
 - A tanulói adatlap és az osztályok, csoportok betöltése után frissülnek a jegyek, házi feladatok, dolgozatok és üzenetek.
 - Az órarend legfeljebb 14 napos részletekben töltődik le. Az első teljes szinkron a tanévet is feldolgozza, a későbbi frissítések a gyorsítótár és az ismert tanévvégi esemény alapján szűkíthetők.
-- A kezdőlap kézi frissítése az aktuális hét és a kezdőlapon megjelenő adatok frissítését végzi. Sikertelen teljes szinkron után az újrapróbálás a teljes folyamatot ismétli.
-- Az órarendben kiválasztott nap körüli adatok külön is frissülnek.
-- A faliújság és a tanári feljegyzések időszakosan, azonosító alapján egyesítve kerülnek a helyi tárba.
-- A hiányzások az órarend után frissülnek. A digitális tantárgyak a jegyek megnyitásakor töltődnek le. A kliens az osztálycsoportok átlagainak lekérdezését is tartalmazza.
+- A kézi frissítés az aktuális hetet, a kiválasztott órarendi időszakot és a kezdőlapon megjelenő adatokat is frissíti. Sikertelen teljes szinkron után az újrapróbálás a teljes folyamatot ismétli.
+- Az órarendi napválasztás csak a helyben tárolt adatok között navigál; új adatok lekéréséhez használd a Frissítés gombot.
+- A faliújság és a tanári feljegyzések frissítéskor, azonosító alapján egyesítve kerülnek a helyi tárba.
+- A hiányzások az órarend után frissülnek. A digitális tantárgyak az indítási és kézi szinkron részeként töltődnek le. A kliens az osztálycsoportok átlagainak lekérdezését is tartalmazza.
 - A sikeres részfrissítések folyamatosan mentődnek. Hiba esetén az érintett rész korábbi adatai megmaradnak, és az alkalmazás jelzi a sikertelen frissítéseket.
 
-A tokenmegújítás párhuzamos kérések esetén is sorba rendezett. Az átmeneti tokenmegújítási hibák utáni várakozás a Firka 1, 3 és 5 másodperces ütemezését követi. Az alkalmazásba visszatéréskor kétperces frissítési időköz segíti az adatok aktualizálását.
+A tokenmegújítás párhuzamos kérések esetén is sorba rendezett. Az átmeneti tokenmegújítási hibák utáni várakozás a Firka 1, 3 és 5 másodperces ütemezését követi.
 
 ### Firka-alapú animációk
 
@@ -97,7 +97,7 @@ A becslés a jelenlegi átlagot használja. A hivatalos ösztöndíj az előző 
 
 Érintsd meg a **jobb felső sarokban lévő profilbuborékot**. A felcsúszó menüben szerkesztheted a megjelenített nevedet, választhatsz vagy eltávolíthatsz profilképet, megnyithatod a beállításokat, illetve kijelentkezhetsz.
 
-- A név a **Név mentése** gombbal menthető.
+- A név a **Név mentése** gombbal menthető. A név és a profilkép mentése a KRÉTA-szinkrontól függetlenül, helyben történik; hálózati frissítés közben is használható.
 - A kiválasztott kép középre vágott, legfeljebb 512 × 512 képpontos másolata helyben tárolódik.
 - Az egyéni profil minden KRÉTA-fiókhoz külön tartozik. A bemutató mód saját profilt használ.
 - A név, a profilkép és a megjelenési beállítások megmaradnak az alkalmazás újraindítása után.
@@ -121,15 +121,15 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.4.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+A 0.4.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK és release APK fordítása | Sikeres; a debug aláírás ellenőrizve, a release APK aláíratlan |
-| JVM-tesztek | 31 sikeres teszt, az átlagszámítás és az ösztöndíjsávok határértékeivel |
+| JVM-tesztek | 39 sikeres teszt, ünnepnap-szűréssel, párhuzamos helyi mentéssel és a kézi frissítés ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | Felhasználói visszaigazolás alapján működik; ebben a változatban nem módosult |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.4.1 éles eszközös ellenőrzése még szükséges |
 
 A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 

@@ -141,7 +141,7 @@ class KretaApi(
 
     /** Coalesced by the caller and serialized against login/logout to protect account boundaries. */
     @Synchronized fun load(date: LocalDate, onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, true, onProgress)
-    @Synchronized fun refreshHomeFeed(onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(today(), false, onProgress)
+    @Synchronized fun refreshHomeFeed(date: LocalDate = today(), onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, false, onProgress)
 
     private fun sync(date: LocalDate, wholeSchoolYear: Boolean, onProgress: (SchoolData) -> Unit): SchoolData {
         session()
@@ -168,6 +168,7 @@ class KretaApi(
         val monday = current.minusDays((current.dayOfWeek.value - 1).toLong())
         val weekEnd = monday.plusDays(if (wholeSchoolYear) 14 else 7)
         val jobs = listOf<Pair<String, () -> Unit>>(
+            "Tantárgyak" to { cache.replace("subjects", collection("/dktapi/intezmenyek/munkaterek/tanulok")) },
             "Jegyek" to { replace("grades", "Ertekelesek", validate = Grade::parse) },
             "Házi feladatok" to { replace("homework", "HaziFeladatok", start, SchoolTask::homework) },
             "Dolgozatok" to { replace("tests", "BejelentettSzamonkeresek", validate = SchoolTask::exam) },

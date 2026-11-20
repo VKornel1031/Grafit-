@@ -64,4 +64,30 @@ class GradeSummaryTest {
     @Test fun olderCachesRemainReadableWithoutSubjectNames() {
         assertTrue(SchoolData.parse(JSONObject("""{"student":{"Nev":"Teszt"}}""")).subjectNames.isEmpty())
     }
+
+    @Test fun holidaysAndNonTeachingDaysNeverBecomeSubjectsFromTimetableNames() {
+        val data = SchoolData.parse(JSONObject("""{
+            "student":{"Nev":"Teszt"},
+            "subjects":[{"tantargyNev":"Fizika","tipusId":0}],
+            "lessons":[
+                {"Uid":"holiday","Nev":"Ünnepnap","Tantargy":null,
+                 "KezdetIdopont":"2026-10-23T00:00:00","VegIdopont":"2026-10-24T00:00:00"},
+                {"Uid":"day-off","Nev":"Munkaszüneti nap",
+                 "KezdetIdopont":"2026-11-01T00:00:00","VegIdopont":"2026-11-02T00:00:00"},
+                {"Uid":"break","Nev":"Őszi szünet","Tantargy":{},
+                 "KezdetIdopont":"2026-10-26T00:00:00","VegIdopont":"2026-10-27T00:00:00"},
+                {"Uid":"lesson","Nev":"Angol óra","Tantargy":{"Nev":"Angol nyelv"},
+                 "KezdetIdopont":"2026-11-20T08:00:00","VegIdopont":"2026-11-20T08:45:00"}]
+        }"""))
+        assertEquals(setOf("Fizika", "Angol nyelv"), data.gradeSubjects().toSet())
+        // Holidays remain visible on their proper timetable dates.
+        assertEquals(4, data.lessons.size)
+        assertEquals("Ünnepnap", data.lessons.first().subject)
+    }
+
+    @Test fun realSubjectsWithNoGradesAndCancelledLessonsRemainInTheSubjectList() {
+        val data = SchoolData.demo().copy(subjectNames = listOf("Fizika"), grades = listOf(mark("Csak jegy", 5)),
+            lessons = SchoolData.demo().lessons.take(1).map { it.copy(subject = "Elmaradt óra tantárgya", state = "Elmaradt") })
+        assertEquals(setOf("Fizika", "Csak jegy", "Elmaradt óra tantárgya"), data.gradeSubjects().toSet())
+    }
 }

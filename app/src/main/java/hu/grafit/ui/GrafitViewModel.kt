@@ -6,7 +6,6 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import hu.grafit.data.*
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -19,8 +18,6 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("appearance", 0)
     private val api = KretaApi(SecureStore(app))
     private val profiles = ProfileStore(app)
-    private var subjectsAttempted = false
-    private var lastSyncAttempt = 0L
     var profile by mutableStateOf(api.profileKey?.let(profiles::read) ?: LocalProfile())
         private set
     val displayName: String get() = profile.displayName.ifBlank { data?.student.orEmpty() }.ifBlank { "Grafit" }
@@ -32,8 +29,13 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     var data by mutableStateOf(api.cached()); private set
     var signedIn by mutableStateOf(api.signedIn); private set
     var demo by mutableStateOf(false); private set
-    var busy by mutableStateOf(false); private set
-    var error by mutableStateOf<String?>(null); private set
+    private val syncOperation = OperationState()
+    private val profileOperation = OperationState()
+    private var accountChanging by mutableStateOf(false)
+    val busy: Boolean get() = syncOperation.busy
+    val error: String? get() = syncOperation.error
+    val profileBusy: Boolean get() = profileOperation.busy || accountChanging
+    val profileError: String? get() = profileOperation.error
     var date by mutableStateOf(today()); private set
     init { if (signedIn) syncAll() }
     fun customize(value: Appearance) {
@@ -42,90 +44,94 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
             .putBoolean("compact", value.compact).putBoolean("hide", value.hideGrades).putBoolean("grades", value.showGrades)
             .putBoolean("absences", value.showAbsences).putFloat("radius", value.radius).putInt("refreshRate", value.refreshRate).apply()
     }
-    private fun work(failureMessage: String = "Nem sikerült csatlakozni. Ellenőrizd a kapcsolatot, és próbáld újra.", action: suspend () -> Unit) {
-        if (busy) return
-        busy = true; error = null
-        viewModelScope.launch {
-            try { action() } catch (e: CancellationException) { throw e } catch (e: Exception) {
-                error = if (e is ApiFailure || e is IllegalArgumentException) e.message else failureMessage
-            } finally { busy = false }
+    private fun work(failureMessage: String = "Nem sikerült csatlakozni. Ellenőrizd a kapcsolatot, és próbáld újra.", action: suspend () -> Unit) =
+        syncOperation.launch(viewModelScope, failureMessage, action)
+
+    private fun editProfile(failureMessage: String = "Nem sikerült helyben menteni a profilt. Próbáld újra.", action: suspend (String) -> Unit) {
+        if (profileBusy || (!signedIn && !demo)) return
+        profileOperation.launch(viewModelScope, failureMessage) {
+            // Capture the account on the main thread before starting any asynchronous file work.
+            val account = profileAccount
+            action(account)
         }
     }
-    fun login(code: String, verifier: String) = work {
-        withContext(Dispatchers.IO) { api.login(code, verifier) }
-        signedIn = true; demo = false; data = null
-        profile = withContext(Dispatchers.IO) { profiles.read(profileAccount) }
-        lastSyncAttempt = System.currentTimeMillis()
-        subjectsAttempted = false
-        data = withContext(Dispatchers.IO) { api.load(date, ::publishSync) }
-        showSyncIssues()
+
+    fun login(code: String, verifier: String) {
+        if (profileBusy) return
+        work {
+            accountChanging = true
+            try {
+                val localProfile = withContext(Dispatchers.IO) {
+                    api.login(code, verifier)
+                    profiles.read(requireNotNull(api.profileKey))
+                }
+                // Expose the account only after its local profile has been loaded.
+                profile = localProfile
+                signedIn = true; demo = false; data = null
+            } finally {
+                accountChanging = false
+            }
+            data = withContext(Dispatchers.IO) { api.load(date, ::publishSync) }
+            showSyncIssues()
+        }
     }
     private fun publishSync(snapshot: SchoolData) { viewModelScope.launch { data = snapshot } }
     private fun showSyncIssues() {
         if (api.syncIssues.isNotEmpty()) {
             val names = api.syncIssues.take(3).joinToString(", ")
             val remaining = if (api.syncIssues.size > 3) " és további ${api.syncIssues.size - 3}" else ""
-            error = "Néhány részfrissítés sikertelen ($names$remaining)."
+            syncOperation.error = "Néhány részfrissítés sikertelen ($names$remaining)."
         }
     }
     private fun syncAll() = work {
-        lastSyncAttempt = System.currentTimeMillis()
-        subjectsAttempted = false
         data = withContext(Dispatchers.IO) { api.load(date, ::publishSync) }
         showSyncIssues()
     }
     fun reload() = work {
         if (!demo) {
-            lastSyncAttempt = System.currentTimeMillis()
-            subjectsAttempted = false
             data = withContext(Dispatchers.IO) {
-                if (api.syncIssues.isNotEmpty()) api.load(date, ::publishSync) else api.refreshHomeFeed(::publishSync)
+                if (api.syncIssues.isNotEmpty()) api.load(date, ::publishSync) else api.refreshHomeFeed(date, ::publishSync)
             }
             showSyncIssues()
         }
     }
-    fun loadSubjects() {
-        if (demo || busy || subjectsAttempted) return
-        subjectsAttempted = true
-        work {
-            val updated = withContext(Dispatchers.IO) { api.getSubjects(); api.cached() }
-            if (updated != null) data = updated
-        }
-    }
-    fun onResume() {
-        if (signedIn && !demo && !busy && System.currentTimeMillis() - lastSyncAttempt >= 120_000) reload()
-    }
     fun selectDate(value: LocalDate) {
         if (busy) return
         date = value
-        if (signedIn && !demo) work {
-            data = withContext(Dispatchers.IO) { api.getLessonsCovering(value, value.plusDays(14)) }
-        }
     }
     fun startDemo() {
-        if (busy) return
-        demo = true; error = null; data = SchoolData.demo()
+        if (busy || profileBusy) return
+        demo = true; syncOperation.error = null; data = SchoolData.demo()
         profile = profiles.read("demo")
     }
-    fun saveProfileName(name: String) = work {
+    fun saveProfileName(name: String) = editProfile { account ->
         val trimmed = name.trim()
         require(trimmed.length <= 60 && trimmed.none { it.isISOControl() }) { "A név legfeljebb 60 karakter lehet." }
         val updated = profile.copy(displayName = trimmed)
-        withContext(Dispatchers.IO) { profiles.save(profileAccount, updated) }
+        withContext(Dispatchers.IO) { profiles.save(account, updated) }
         profile = updated
     }
-    fun updateProfilePhoto(uri: Uri?) = work("Nem sikerült beolvasni vagy menteni a képet. Válassz egy másik képet.") {
-        val updated = withContext(Dispatchers.IO) {
-            val photo = uri?.let(profiles::importPhoto)
-            profile.copy(photo = photo).also { profiles.save(profileAccount, it) }
+    fun updateProfilePhoto(uri: Uri?) = editProfile("Nem sikerült beolvasni vagy menteni a képet. Válassz egy másik képet.") { account ->
+        val photo = withContext(Dispatchers.IO) { uri?.let(profiles::importPhoto) }
+        val updated = profile.copy(photo = photo)
+        withContext(Dispatchers.IO) { profiles.save(account, updated) }
+        profile = updated
+    }
+    fun logout() {
+        // A local save must finish before the active account can change.
+        if (busy || profileBusy) return
+        accountChanging = true
+        work {
+            try {
+                withContext(Dispatchers.IO) { api.logout() }
+                demo = false; signedIn = false; data = null; profile = LocalProfile(); date = today()
+                profileOperation.error = null
+                android.webkit.CookieManager.getInstance().removeAllCookies(null)
+                android.webkit.WebStorage.getInstance().deleteAllData()
+            } finally {
+                accountChanging = false
+            }
         }
-        profile = updated
     }
-    fun logout() = work {
-        withContext(Dispatchers.IO) { api.logout() }
-        demo = false; signedIn = false; data = null; profile = LocalProfile(); date = today()
-        android.webkit.CookieManager.getInstance().removeAllCookies(null)
-        android.webkit.WebStorage.getInstance().deleteAllData()
-    }
-    fun dismissError() { error = null }
+    fun dismissError() { syncOperation.error = null }
 }

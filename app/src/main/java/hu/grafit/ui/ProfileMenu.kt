@@ -89,33 +89,33 @@ internal fun ProfileMenu(vm: GrafitViewModel, onDismiss: () -> Unit, onSettings:
             Text(if (vm.demo) "Bemutató profil" else vm.data?.school.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(Modifier.padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilledTonalButton(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !vm.busy) {
+                FilledTonalButton(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }, enabled = !vm.profileBusy) {
                     Icon(Icons.Outlined.AddPhotoAlternate, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp)); Text("Profilkép cseréje")
                 }
-                if (vm.profile.photo != null) IconButton(onClick = { vm.updateProfilePhoto(null) }, enabled = !vm.busy) {
+                if (vm.profile.photo != null) IconButton(onClick = { vm.updateProfilePhoto(null) }, enabled = !vm.profileBusy) {
                     Icon(Icons.Outlined.DeleteOutline, "Profilkép eltávolítása")
                 }
             }
             OutlinedTextField(value = name, onValueChange = { if (it.length <= 60) name = it },
-                modifier = Modifier.fillMaxWidth(), label = { Text("Megjelenített név") },
+                modifier = Modifier.fillMaxWidth(), label = { Text("Megjelenített név") }, enabled = !vm.profileBusy,
                 placeholder = { Text(vm.data?.student ?: "A neved") }, singleLine = true,
                 supportingText = {
                     val status = if (name.trim() == vm.profile.displayName) "Helyben mentve" else "Nem mentett módosítás"
                     Text("$status · ${name.length}/60")
                 })
             Button(onClick = { vm.saveProfileName(name) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                enabled = !vm.busy && name.trim() != vm.profile.displayName) {
+                enabled = !vm.profileBusy && name.trim() != vm.profile.displayName) {
                 Text("Név mentése")
             }
-            if (vm.busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
-            vm.error?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error) }
+            if (vm.profileBusy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
+            vm.profileError?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error) }
             HorizontalDivider(Modifier.padding(vertical = 20.dp))
             ProfileMenuAction("Beállítások", "Megjelenés, animációk és képfrissítés", Icons.Outlined.Tune) {
                 scope.launchAfterHiding(sheetState, onDismiss, onSettings)
             }
             ProfileMenuAction(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés", null,
-                Icons.AutoMirrored.Outlined.Logout, enabled = !vm.busy) {
+                Icons.AutoMirrored.Outlined.Logout, enabled = !vm.busy && !vm.profileBusy) {
                 scope.launchAfterHiding(sheetState, onDismiss, onLogout)
             }
         }

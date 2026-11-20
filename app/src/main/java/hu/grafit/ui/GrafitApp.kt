@@ -7,8 +7,6 @@ import hu.grafit.KretaLoginActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -108,14 +106,11 @@ private fun AppContent(vm: GrafitViewModel) {
         }
     }
     fun openLogin() {
-        if (login) return
+        if (login || vm.profileBusy) return
         login = true
         loginLauncher.launch(Intent(context, KretaLoginActivity::class.java))
     }
     val active = vm.signedIn || vm.demo
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (!profileMenu && !login && !settings) vm.onResume()
-    }
     LaunchedEffect(active) { if (active) login = false }
     LaunchedEffect(vm.appearance) {
         if ((page == Page.Grades && !vm.appearance.showGrades) ||
@@ -154,7 +149,7 @@ private fun AppContent(vm: GrafitViewModel) {
                         Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
                         Row {
                             if (active) TextButton(onClick = vm::reload, enabled = !vm.busy) { Text("Újrapróbálás") }
-                            if (vm.signedIn) TextButton(onClick = { openLogin() }) { Text("Bejelentkezés újra") }
+                            if (vm.signedIn) TextButton(onClick = { openLogin() }, enabled = !vm.profileBusy) { Text("Bejelentkezés újra") }
                             TextButton(onClick = vm::dismissError) { Text("Bezárás") }
                         }
                     }
@@ -418,13 +413,11 @@ private fun Timetable(vm: GrafitViewModel) {
 }
 @Composable
 private fun Grades(vm: GrafitViewModel) {
-    LaunchedEffect(vm.busy, vm.demo) { if (!vm.busy && !vm.demo) vm.loadSubjects() }
     var selectedSubject by rememberSaveable { mutableStateOf<String?>(null) }
     val all = vm.data?.grades.orEmpty()
     val grouped = remember(all) { all.groupBy { it.subject } }
-    val subjects = remember(grouped, vm.data?.lessons, vm.data?.subjectNames) {
-        (grouped.keys + vm.data?.subjectNames.orEmpty() + vm.data?.lessons.orEmpty().map { it.subject })
-            .filter { it.isNotBlank() }.distinct().sortedWith(java.text.Collator.getInstance(hu))
+    val subjects = remember(vm.data) {
+        vm.data?.gradeSubjects().orEmpty().sortedWith(java.text.Collator.getInstance(hu))
     }
     val yearly = remember(all) { annualAverage(all)?.let(::roundedGradeAverage) }
     val scholarship = technikumScholarshipEstimate(yearly)
@@ -599,10 +592,10 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         item {
             HorizontalDivider()
             TextButton(onClick = { about = true }) { Icon(Icons.Outlined.Info, null); Spacer(Modifier.width(10.dp)); Text("A Grafitról és a licencről") }
-            TextButton(onClick = onLogout, enabled = !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
+            TextButton(onClick = onLogout, enabled = !vm.busy && !vm.profileBusy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.0") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.1") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

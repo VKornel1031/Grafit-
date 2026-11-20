@@ -3,6 +3,11 @@ package hu.grafit.data
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+/** A timetable entry's display name may be a holiday, not a subject. */
+fun SchoolData.gradeSubjects(): List<String> =
+    (grades.map { it.subject } + subjectNames + lessons.filter { it.hasSubject }.map { it.subject })
+        .filter { it.isNotBlank() }.distinct()
+
 /** Each subject has equal weight, regardless of how many assessments it has. */
 fun annualAverage(grades: List<Grade>): Double? {
     val averages = grades.groupBy { it.subject }.values.mapNotNull(::average)

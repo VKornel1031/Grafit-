@@ -33,11 +33,13 @@ fun average(grades: List<Grade>): Double? {
 }
 
 data class Lesson(val id: String, val subject: String, val start: LocalDateTime, val end: LocalDateTime,
-                  val room: String, val teacher: String, val topic: String, val state: String) {
+                  val room: String, val teacher: String, val topic: String, val state: String,
+                  val hasSubject: Boolean = true) {
     companion object {
         fun parse(j: JSONObject) = Lesson(j.text("Uid"), j.subject(), localTime(j.getString("KezdetIdopont")),
             localTime(j.getString("VegIdopont")), j.text("TeremNeve"), j.text("HelyettesTanarNeve", j.text("TanarNeve")),
-            j.text("Tema"), j.optJSONObject("Allapot")?.text("Nev") ?: "")
+            j.text("Tema"), j.optJSONObject("Allapot")?.text("Nev") ?: "",
+            j.optJSONObject("Tantargy")?.text("Nev")?.isNotBlank() == true)
     }
 }
 data class Absence(val subject: String, val date: String, val state: String, val minutes: Int) {

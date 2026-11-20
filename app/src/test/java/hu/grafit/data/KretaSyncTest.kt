@@ -51,6 +51,7 @@ class KretaSyncTest {
                 return when {
                     path.endsWith("TanuloAdatlap") -> json("""{"Nev":"Teszt Diák","IntezmenyNev":"Iskola"}""")
                     path.endsWith("OsztalyCsoportok") -> json("""[{"Uid":"group","Nev":"10.A"}]""")
+                    path == "/dktapi/intezmenyek/munkaterek/tanulok" -> json("""[{"tantargyNev":"Fizika","tipusId":0}]""")
                     path.endsWith("Ertekelesek") -> if (failGrades) MockResponse().setResponseCode(503)
                         else json(if (emptyGrades) "[]" else """[{"Uid":"grade","Tantargy":{"Nev":"Matematika"},"SzamErtek":5}]""")
                     path.endsWith("OrarendElemek") -> {
@@ -145,6 +146,20 @@ class KretaSyncTest {
         assertTrue(requests.any { it.requestUrl!!.encodedPath == "/dktapi/intezmenyek/munkaterek/tanulok" })
         val average = requests.last()
         assertEquals(listOf("task", "task"), average.requestUrl!!.queryParameterValues("oktatasiNevelesiFeladatUid"))
+    }
+
+    @Test fun subjectsAreIncludedInRefreshWithoutOpeningTheGradesTab() {
+        val result = api.refreshHomeFeed()
+        assertEquals(listOf("Fizika"), result.subjectNames)
+        assertEquals(1, requests.count { it.requestUrl!!.encodedPath == "/dktapi/intezmenyek/munkaterek/tanulok" })
+    }
+
+    @Test fun manualRefreshUpdatesTheSelectedTimetablePeriod() {
+        val selected = today().plusWeeks(6)
+        val result = api.refreshHomeFeed(selected)
+        assertTrue(requests.any { it.requestUrl!!.encodedPath.endsWith("OrarendElemek") &&
+            it.requestUrl!!.queryParameter("datumTol") == selected.toString() })
+        assertTrue(result.lessons.any { it.start.toLocalDate() == selected })
     }
 
     @Test fun legacyFlattenedTasksSurvivePartialCacheMigration() {

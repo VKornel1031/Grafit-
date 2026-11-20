@@ -15,8 +15,8 @@ android {
         applicationId = "hu.grafit"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.1"
+        versionCode = 11
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -25,15 +25,25 @@ android {
             storePassword = releaseSigning.getValue("GRAFIT_STORE_PASSWORD")
             keyAlias = releaseSigning.getValue("GRAFIT_KEY_ALIAS")
             keyPassword = releaseSigning.getValue("GRAFIT_KEY_PASSWORD")
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // Compatibility build: retain the same application code as the working unshrunk builds.
+            isMinifyEnabled = false
+            isShrinkResources = false
             signingConfig = signingConfigs.findByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+    packaging {
+        // Extract native libraries through the traditional installer path.
+        jniLibs.useLegacyPackaging = true
+        // Keep DEX stored and aligned for direct ART access on recent Android versions.
+        dex.useLegacyPackaging = false
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions {

@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **Grafit 1.0.1** csökkentett jogosultságú Android-kiadás. A GitHub-frissítések letöltési oldalát a böngészőben nyitja meg; az alkalmazás nem kér APK-telepítési engedélyt és nem kezel telepítőcsomagokat. Az éles APK R8-optimalizált és ugyanazzal az állandó kiadási kulccsal aláírt. A Google Play Protect minősítését a Google határozza meg; a kódmódosítás nem jelent jóváhagyott Google-felülvizsgálatot.
+A **Grafit 1.0.2** kompatibilitási csomagolást használ a korábbi éles APK telepítési hibájának kivizsgálásához. Kód- és erőforrás-zsugorítás nélkül, tömörítetlen DEX-fájlokkal, hagyományosan kibontott natív könyvtárakkal és V1/V2/V3 aláírással készül. Az alkalmazás összes funkciója és állandó kiadási kulcsa megmarad. A készülék telepítőjének hibakódja nem ismert, ezért a kompatibilitási csomag telefonos ellenőrzése szükséges.
 
 ## Funkciók
 
@@ -176,16 +176,16 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.0.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.0.2 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
-| Debug APK, optimalizált éles APK és AAB fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
-| Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és R8 utáni indulási konstruktor ellenőrizve |
+| Debug APK, kompatibilitási éles APK és AAB fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
+| Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és indulási konstruktor ellenőrizve |
 | JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.1 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.2 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 
@@ -206,7 +206,7 @@ A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a té
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat R8-optimalizált release APK-t készít; a négy `GRAFIT_` aláírási változóval éles kulcsot használ, ezek nélkül aláíratlan ellenőrzési csomagot fordít. Publikáláshoz használd a `scripts/build-release.sh` scriptet és a [kiadási útmutatót](docs/RELEASING.md).
+Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat az aktuális csomagolási beállításokkal release APK-t készít; a négy `GRAFIT_` aláírási változóval éles kulcsot használ, ezek nélkül aláíratlan ellenőrzési csomagot fordít. Publikáláshoz használd a `scripts/build-release.sh` scriptet és a [kiadási útmutatót](docs/RELEASING.md).
 
 Csatlakoztatott telefonra vagy emulátorra telepítéshez futtasd az alábbi parancsot.
 

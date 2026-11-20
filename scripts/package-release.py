@@ -37,12 +37,23 @@ if not requested <= allowed:
     raise SystemExit('The release requests permissions outside its minimal permission policy: ' + ', '.join(sorted(requested - allowed)))
 subprocess.run([str(build_tools / 'zipalign'), '-c', '4', str(apk)], check=True, stdout=subprocess.DEVNULL)
 mapping = root / 'app/build/outputs/mapping/release/mapping.txt'
-if not mapping.is_file() or mapping.stat().st_size == 0:
-    raise SystemExit('The release must be built with R8 optimisation.')
-model = re.search(r'^hu\.grafit\.ui\.GrafitViewModel -> (.+):$', mapping.read_text(), re.M)
-if not model:
-    raise SystemExit('The release mapping does not contain the Android ViewModel.')
-descriptor = "Class descriptor  : 'L" + model.group(1).replace('.', '/') + ";'"
+build_config = (root / 'app/build.gradle.kts').read_text()
+def build_flag(name):
+    match = re.search(r'\b' + name + r'\s*=\s*(true|false)\b', build_config)
+    if not match:
+        raise SystemExit('Explicit release build setting is missing: ' + name)
+    return match.group(1) == 'true'
+minified = build_flag('isMinifyEnabled')
+resources_shrunk = build_flag('isShrinkResources')
+model_name = 'hu.grafit.ui.GrafitViewModel'
+if minified:
+    if not mapping.is_file() or mapping.stat().st_size == 0:
+        raise SystemExit('The minified release must have a matching R8 mapping.')
+    model = re.search(r'^hu\.grafit\.ui\.GrafitViewModel -> (.+):$', mapping.read_text(), re.M)
+    if not model:
+        raise SystemExit('The release mapping does not contain the Android ViewModel.')
+    model_name = model.group(1)
+descriptor = "Class descriptor  : 'L" + model_name.replace('.', '/') + ";'"
 constructor_found = False
 with zipfile.ZipFile(apk) as archive, tempfile.TemporaryDirectory() as temporary:
     for name in archive.namelist():
@@ -58,7 +69,7 @@ with zipfile.ZipFile(apk) as archive, tempfile.TemporaryDirectory() as temporary
                 r"name\s*:\s*'<init>'\s+type\s*:\s*'\(Landroid/app/Application;\)V'\s+access\s*:.*PUBLIC", body))
             break
 if not constructor_found:
-    raise SystemExit('The minified APK lost the public Application constructor required at startup.')
+    raise SystemExit('The APK lost the public Application constructor required at startup.')
 output = Path(os.environ.get('GRAFIT_RELEASE_OUTPUT', root / 'dist')).resolve()
 output.mkdir(parents=True, exist_ok=True)
 target = output / f'grafit-{version}.apk'
@@ -69,6 +80,6 @@ manifest = {'version': version, 'versionCode': element['versionCode'], 'package'
     'commit': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip(),
     'apk': target.name, 'size': target.stat().st_size, 'sha256': digest,
     'signingCertificateSha256': expected, 'minSdk': 26, 'targetSdk': 35,
-    'debuggable': False, 'minified': True, 'resourcesShrunk': True, 'requestedPermissions': sorted(requested)}
+    'debuggable': False, 'minified': minified, 'resourcesShrunk': resources_shrunk, 'requestedPermissions': sorted(requested)}
 (output / 'release-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 print(f'Verified signed production APK: {target} ({target.stat().st_size:,} bytes)')

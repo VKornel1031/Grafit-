@@ -417,7 +417,10 @@ private fun Timetable(vm: GrafitViewModel) {
         Heading("Órarend", date.format(DateTimeFormatter.ofPattern("yyyy. MMMM", hu)))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             IconButton(onClick = { vm.selectDate(date.minusDays(7)) }, enabled = !vm.busy) { Icon(Icons.Outlined.ChevronLeft, "Előző hét") }
-            TextButton(onClick = { vm.selectDate(today()) }, enabled = !vm.busy) { Text("Ma") }
+            TextButton(onClick = { vm.selectDate(today()) }, enabled = !vm.busy, modifier = Modifier.weight(1f)) {
+                Text(if (date == today()) "Ma" else date.format(DateTimeFormatter.ofPattern("MMM d., EEEE", hu)),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
             IconButton(onClick = { vm.selectDate(date.plusDays(7)) }, enabled = !vm.busy) { Icon(Icons.Outlined.ChevronRight, "Következő hét") }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {

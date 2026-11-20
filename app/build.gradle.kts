@@ -8,12 +8,14 @@ val releaseSigning = listOf("GRAFIT_KEYSTORE_PATH", "GRAFIT_STORE_PASSWORD", "GR
 require(releaseSigning.values.all { it == null } || releaseSigning.values.all { !it.isNullOrBlank() }) {
     "Release signing requires all four GRAFIT signing environment variables."
 }
+// A one-time, V3-signed key migration requires Android's signing-history support.
+val signingMigration = providers.gradleProperty("grafitSigningMigration").orNull == "true"
 android {
     namespace = "hu.grafit"
     compileSdk = 35
     defaultConfig {
         applicationId = "hu.grafit"
-        minSdk = 26
+        minSdk = if (signingMigration) 28 else 26
         targetSdk = 35
         versionCode = 11
         versionName = "1.0.2"

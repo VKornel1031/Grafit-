@@ -79,3 +79,7 @@ Növeld a `versionName` és `versionCode` értékét, adj hozzá `releases/<verz
 Az 1.0.0 az új éles kulcs miatt a korábbi debug APK helyett egyszeri újratelepítést igényel. Ez a helyi profil és beállítások elvesztésével jár; az iskolai adatok új bejelentkezéssel visszaszinkronizálhatók. Azonos éles kulccsal aláírt későbbi verziók megőrzik az alkalmazás adatait.
 
 Az eszköztesztek fordítása és a statikus APK-ellenőrzés nem helyettesíti a telefonos ellenőrzést: telepítés, bejelentkezés, szinkron, profil, témák és az Android frissítési megerősítése. A felhasználó kérésére a felhős ellenőrzés nem indít emulátort.
+
+## Aláírási ütközés a fejlesztői változattal
+
+Az eredeti debug kiadás Android 9+ rendszereken hitelesített kulcsátmenettel is frissíthető. Részletek és külön buildscript: [SIGNING_MIGRATION.md](SIGNING_MIGRATION.md). Ez megőrizheti a telefonon még meglévő adatokat, és az alkalmazás éles aláírókulcsát használja.

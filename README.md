@@ -37,6 +37,8 @@ A **Grafit 1.0.2** kompatibilitási csomagolást használ a korábbi éles APK t
 
 ## Kipróbálás és telepítés
 
+**`INSTALL_FAILED_UPDATE_INCOMPATIBLE` telepítési hibánál:** az Android egy eltérő kulccsal aláírt korábbi Grafit-csomagot tart nyilván. Az eredeti felhős debug változathoz Android 9-től hitelesített [aláírási kulcsátmeneti APK](docs/SIGNING_MIGRATION.md) készíthető, alkalmazásfunkciók módosítása nélkül.
+
 A stabil kiadások a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon érhetők el a publikálást követően. Az 1.0.0 kiadási jegyzete: [releases/1.0.0.md](releases/1.0.0.md). A korábbi debug változatról az új éles kulcs miatt egyszeri újratelepítés szükséges, amely törli a helyi profilt és beállításokat. A későbbi éles frissítések megőrzik ezeket.
 
 **Android 8.0 vagy újabb rendszer szükséges.** A Material You háttérképhez igazodó színei Android 12-től érhetők el.

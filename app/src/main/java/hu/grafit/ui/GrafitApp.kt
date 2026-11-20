@@ -4,6 +4,7 @@ import android.os.Build
 import android.content.Intent
 import android.app.Activity
 import hu.grafit.KretaLoginActivity
+import hu.grafit.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
@@ -68,7 +69,6 @@ fun GrafitApp(vm: GrafitViewModel) {
     ApplyRefreshRate(a.refreshRate)
     val context = LocalContext.current
     val dark = a.mode == "dark" || (a.mode == "system" && isSystemInDarkTheme())
-    ApplySystemBars(dark)
     val baseColors = if (a.dynamic && Build.VERSION.SDK_INT >= 31) {
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else if (dark) darkColorScheme(primary = lerp(seeds[a.color], Color.White, .45f), primaryContainer = seeds[a.color].copy(alpha = .35f),
@@ -77,8 +77,10 @@ fun GrafitApp(vm: GrafitViewModel) {
         background = Color(0xFFF8FAF5), surface = Color(0xFFF8FAF5))
     val tokens = remember(a.customCss) { ThemeCss.parse(a.customCss) }
     val colors = customColors(if (dark && a.pureBlack) baseColors.copy(background = Color.Black, surface = Color.Black) else baseColors, tokens)
+    ApplySystemBars(contrastColor(colors.surface) == Color.White,
+        contrastColor(if (a.pillNavigation) colors.background else colors.surfaceContainerLow) == Color.White)
     CompositionLocalProvider(LocalAppearance provides a, LocalThemeTokens provides tokens) {
-    MaterialTheme(colorScheme = colors, typography = customTypography(a), shapes = Shapes(medium = RoundedCornerShape(a.radius.dp),
+    MaterialTheme(colorScheme = colors, typography = remember(a.textScale, a.fontFamily) { customTypography(a) }, shapes = Shapes(medium = RoundedCornerShape(a.radius.dp),
         large = RoundedCornerShape(a.radius.dp), extraLarge = RoundedCornerShape((a.radius + 8).dp))) {
         Surface(Modifier.fillMaxSize()) { AppContent(vm) }
         UpdatePrompt(vm.updates)
@@ -262,8 +264,12 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
             delay(30_000)
         }
     }
-    val day = schoolDay(data?.lessons.orEmpty(), now)
+    val dayDate = now.toLocalDate()
+    val dailyLessons = remember(data?.lessons, dayDate) { data?.lessons.orEmpty().filter { it.start.toLocalDate() == dayDate } }
+    val day = schoolDay(dailyLessons, now)
     val next = day.next
+    val recent = remember(data?.grades) { data?.grades.orEmpty().sortedByDescending { it.date }.take(3) }
+    val tasks = remember(data?.tasks) { data?.tasks.orEmpty().sortedByDescending { it.date } }
     FirkaLoadedContent(loaded = data != null) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
@@ -311,13 +317,11 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         }
         if (vm.appearance.homeGrades) {
         item { Section("Legutóbbi jegyek", "Összes", grades) }
-        val recent = data?.grades.orEmpty().sortedByDescending { it.date }.take(3)
         if (recent.isEmpty()) item { Empty("Még nincsenek megjeleníthető jegyek.") }
         items(recent) { GradeRow(it, vm.appearance) }
         }
         if (vm.appearance.homeTasks) {
         item { Section("Teendők és hírek") }
-        val tasks = data?.tasks.orEmpty().sortedByDescending { it.date }
         if (tasks.isEmpty()) item { Empty("Nincs megjeleníthető teendő vagy hír.") }
         items(tasks) { task ->
             GrafitCard() {
@@ -331,7 +335,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         }
         if (vm.appearance.homeTimetable) {
         item { Section("A mai napod", "Órarend", timetable) }
-        val lessons = data?.lessons.orEmpty().filter { it.start.toLocalDate() == today() }
+        val lessons = dailyLessons
         if (lessons.isEmpty()) item { Empty("Erre a napra nincs tanóra.") }
         items(lessons) { LessonRow(it, vm.appearance) }
         }
@@ -448,7 +452,7 @@ private fun Grades(vm: GrafitViewModel) {
         val collator = java.text.Collator.getInstance(hu)
         vm.data?.gradeSummaries().orEmpty().sortedWith { a, b -> collator.compare(a.name, b.name) }
     }
-    val yearly = remember(vm.data) { vm.data?.annualAverage()?.let(::roundedGradeAverage) }
+    val yearly = remember(subjects) { annualAverageOfSubjects(subjects)?.let(::roundedGradeAverage) }
     val scholarship = technikumScholarshipEstimate(yearly)
     val hidden = vm.appearance.hideGrades
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
@@ -632,7 +636,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy && !vm.profileBusy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.5.0") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit ${BuildConfig.VERSION_NAME}") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

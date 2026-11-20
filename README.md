@@ -8,7 +8,7 @@
 
 [![Android build](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml/badge.svg)](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml)
 
-[Letöltés](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Licenc](LICENSE.txt)
+[Letöltés](https://github.com/VKornel1031/Grafit-/releases) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Licenc](LICENSE.txt)
 
 </div>
 
@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.5.0 változat** az egész natív felületre érvényes témaszerkesztést, egyéni jegyszíneket, CSS-témaváltozókat és kapszula alakú eszköztárakat kínál. A kezdőlap külön jelzi, ha mára elfogytak az óráid, vagy aznap nincs tanítás. Az alkalmazás a GitHub stabil kiadásaiból képes frissítést keresni, letölteni és az Android telepítőjének átadni.
+A **Grafit 1.0.0** az alkalmazás első stabil Android-verziója. Az éles build R8-kódoptimalizálást, erőforrás-csökkentést és saját, állandó kiadási aláírókulcsot használ. Az optimalizált APK mérete körülbelül **2,1 MiB**. A kiadás előkészítését és az ellenőrzött GitHub-publikálást a [kiadási útmutató](docs/RELEASING.md) írja le.
 
 ## Funkciók
 
@@ -36,6 +36,8 @@ A **0.5.0 változat** az egész natív felületre érvényes témaszerkesztést,
 | **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
 
 ## Kipróbálás és telepítés
+
+A stabil kiadások a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon érhetők el a publikálást követően. Az 1.0.0 kiadási jegyzete: [releases/1.0.0.md](releases/1.0.0.md). A korábbi debug változatról az új éles kulcs miatt egyszeri újratelepítés szükséges, amely törli a helyi profilt és beállításokat. A későbbi éles frissítések megőrzik ezeket.
 
 **Android 8.0 vagy újabb rendszer szükséges.** A Material You háttérképhez igazodó színei Android 12-től érhetők el.
 
@@ -158,7 +160,7 @@ Első alkalommal az Android kérheti a **Grafit → Ismeretlen alkalmazások tel
 
 A frissítési csatornához nyilvános, stabil GitHub Release szükséges a `VKornel1031/Grafit-` tárolóban, például `v0.5.1` címkével. Csatolj hozzá egy legfeljebb 200 MiB méretű, aláírt APK-t, például `grafit-0.5.1.apk` néven. Minden kiadásban növeld a `versionCode` értékét. Az APK-t ugyanazzal a tartós kiadási kulccsal írd alá, mint a felhasználóknál telepített változatot. A GitHub Actions letölthető build-eredményei külön csatornát jelentenek; a frissítéskereső a Releases oldal APK-mellékleteit használja.
 
-A projekt a kiadási kulcsot nem tárolja a forráskódban. Az itt elkészített release APK aláíratlan, a debug APK fejlesztői tesztváltozat. Éles terjesztéshez a saját kulccsal aláírt APK-t kell a kiadáshoz csatolni. Az eltérő aláírású csomag telepítését a Grafit frissítője nem kezdeményezi.
+A projekt a privát kiadási kulcsot nem tárolja a forráskódban. Az 1.0.0-hoz saját, állandó kiadási kulcs készült; az éles csomag ellenőrzése a tárolóban szereplő nyilvános tanúsítványhoz történik. A Signed release workflow és a helyi kiadási script csak a megfelelő kulccsal aláírt APK-t készíti elő publikálásra. A teljes folyamat: [Kiadás és aláírás](docs/RELEASING.md).
 
 ## Helyi adattárolás
 
@@ -168,17 +170,18 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 ## Fejlesztési állapot
 
-A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
+Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.5.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.0.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
-| Debug APK és release APK fordítása | Sikeres; a debug aláírás ellenőrizve, a release APK aláíratlan |
+| Debug APK, optimalizált éles APK és AAB fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
+| Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és R8 utáni indulási konstruktor ellenőrizve |
 | JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési tesztekkel |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.5.0 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.0 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a teljes és hiányos letöltést, az ellenőrzőösszeget és a telepítési szabályokat. Az Android telepítőjének és a telepítési engedélynek a tényleges működését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 
@@ -199,7 +202,7 @@ A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a té
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat aláíratlan release APK-t készít; nyilvános terjesztés előtt saját kiadási kulccsal kell aláírni.
+Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat R8-optimalizált release APK-t készít; a négy `GRAFIT_` aláírási változóval éles kulcsot használ, ezek nélkül aláíratlan ellenőrzési csomagot fordít. Publikáláshoz használd a `scripts/build-release.sh` scriptet és a [kiadási útmutatót](docs/RELEASING.md).
 
 Csatlakoztatott telefonra vagy emulátorra telepítéshez futtasd az alábbi parancsot.
 

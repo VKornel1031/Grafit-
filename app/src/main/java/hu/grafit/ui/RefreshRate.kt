@@ -56,13 +56,13 @@ internal fun ApplyRefreshRate(rate: Int) {
 }
 
 @Composable
-internal fun ApplySystemBars(dark: Boolean) {
+internal fun ApplySystemBars(dark: Boolean, navigationDark: Boolean = dark) {
     val view = LocalView.current
     SideEffect {
         view.context.activity()?.window?.let { window ->
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !dark
-                isAppearanceLightNavigationBars = !dark
+                isAppearanceLightNavigationBars = !navigationDark
             }
         }
     }

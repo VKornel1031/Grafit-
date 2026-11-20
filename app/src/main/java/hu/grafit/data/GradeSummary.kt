@@ -55,7 +55,7 @@ fun SchoolData.gradeSummaries(): List<SubjectGrades> = groupSubjects(
 
 fun SchoolData.gradeSubjects(): List<String> = gradeSummaries().map { it.name }
 
-private fun annualAverageOfSubjects(subjects: List<SubjectGrades>): Double? =
+fun annualAverageOfSubjects(subjects: List<SubjectGrades>): Double? =
     subjects.mapNotNull { average(it.grades) }.takeIf { it.isNotEmpty() }?.average()
 
 fun SchoolData.annualAverage(): Double? = annualAverageOfSubjects(gradeSummaries())

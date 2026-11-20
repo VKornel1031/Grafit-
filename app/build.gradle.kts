@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+val releaseSigning = listOf("GRAFIT_KEYSTORE_PATH", "GRAFIT_STORE_PASSWORD", "GRAFIT_KEY_ALIAS", "GRAFIT_KEY_PASSWORD")
+    .associateWith { providers.environmentVariable(it).orNull }
+require(releaseSigning.values.all { it == null } || releaseSigning.values.all { !it.isNullOrBlank() }) {
+    "Release signing requires all four GRAFIT signing environment variables."
+}
 android {
     namespace = "hu.grafit"
     compileSdk = 35
@@ -10,11 +15,27 @@ android {
         applicationId = "hu.grafit"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.5.0"
+        versionCode = 9
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildFeatures { compose = true }
+    signingConfigs {
+        if (releaseSigning.values.all { !it.isNullOrBlank() }) create("release") {
+            storeFile = file(releaseSigning.getValue("GRAFIT_KEYSTORE_PATH")!!)
+            storePassword = releaseSigning.getValue("GRAFIT_STORE_PASSWORD")
+            keyAlias = releaseSigning.getValue("GRAFIT_KEY_ALIAS")
+            keyPassword = releaseSigning.getValue("GRAFIT_KEY_PASSWORD")
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.findByName("release")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.3.1 fejlesztői változat** külön natív Android-képernyőre helyezi a KRÉTA bejelentkezési böngészőjét. A Firka-alapú szinkronizálás, a helyben mentett személyes profil és az animált Material 3 felület teszi teljessé az alkalmazást.
+A **0.4.0 változat** tantárgyankénti átlagokat, éves átlagot és technikumi ösztöndíjbecslést jelenít meg a Jegyek oldalon. Az új, monokróm grafithegy ikon adaptív és Android 13-tól témázható változatban is elérhető. A bejelentkezés és a Firka-alapú szinkronizálás működése változatlan.
 
 ## Funkciók
 
@@ -26,7 +26,7 @@ A **0.3.1 fejlesztői változat** külön natív Android-képernyőre helyezi a 
 | --- | --- |
 | **Kezdőlap** | Következő tanóra, legutóbbi jegyek, napi órarend és az aktuális óra előrehaladása |
 | **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése |
-| **Jegyek** | Tantárgyi szűrés, súlyozott átlag és érintésre felfedhető értékelések |
+| **Jegyek** | Tantárgyi átlagok, lenyitható értékelések, éves átlag és technikumi ösztöndíjbecslés |
 | **Hiányzások** | Igazolt és igazolatlan mulasztások, igazolásra váró tételek és késések |
 | **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
 | **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
@@ -76,6 +76,23 @@ A natív felület a Firka mozgásainak időzítését és görbéit alkalmazza.
 | Elrejtett jegy felfedése | 400 ms-os átfordulás |
 | Beállítási kapcsolók | 150 ms-os szín- és pozícióváltás |
 
+## Tantárgyi átlagok és ösztöndíj
+
+A **Jegyek** oldalon minden elérhető tantárgy mellett a súlyozott évközi átlaga látható. A tantárgy megérintésével megnyithatók az egyes értékelések. A jegy nélküli tantárgyak átlaga „—”. Az oldal alján egymás mellett jelenik meg az **Éves átlag** és a **Meghatározott ösztöndíj átlag alapján** kártya. A jegyek elrejtése ezekre az összesítésekre is vonatkozik.
+
+Az éves átlag az értékeléssel rendelkező tantárgyak súlyozott átlagainak számtani átlaga: minden tantárgy azonos súllyal számít. Ez évközi tájékoztatás, nem a bizonyítvány hivatalos átlaga.
+
+A technikumi szakirányú oktatásra megjelenített havi becslés sávjai:
+
+| Két tizedesre kerekített átlag | Havi becsült összeg |
+| --- | --- |
+| 2,00–2,99 | 8 000 Ft |
+| 3,00–3,99 | 25 000 Ft |
+| 4,00–4,49 | 42 000 Ft |
+| 4,50–5,00 | 59 000 Ft |
+
+A becslés a jelenlegi átlagot használja. A hivatalos ösztöndíj az előző tanév év végi osztályzataitól és a jogosultsági feltételektől függ. Technikumi ágazati alapoktatásban jogosultság esetén havi 8 000 Ft jár, az átlagtól függetlenül. Hiányzó vagy 2,00 alatti átlagnál az alkalmazás nem ad becslést. Forrás: [SZFSZC – Ösztöndíjak](https://szfszc.hu/kepzesek/osztondijak).
+
 ## Saját profil és beállítások
 
 Érintsd meg a **jobb felső sarokban lévő profilbuborékot**. A felcsúszó menüben szerkesztheted a megjelenített nevedet, választhatsz vagy eltávolíthatsz profilképet, megnyithatod a beállításokat, illetve kijelentkezhetsz.
@@ -104,15 +121,15 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.3.1 ellenőrzései az alábbi területeket fedik le.
+A 0.4.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
-| APK-fordítás és aláírás | Sikeres |
-| JVM-tesztek | 23 sikeres teszt |
+| Debug APK és release APK fordítása | Sikeres; a debug aláírás ellenőrizve, a release APK aláíratlan |
+| JVM-tesztek | 31 sikeres teszt, az átlagszámítás és az ösztöndíjsávok határértékeivel |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
-| Natív böngészőtesztek | 2 sikeres Android-eszközteszt |
-| Éles KRÉTA-bejelentkezés | Valódi fiókos ellenőrzést igényel |
+| Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
+| Éles KRÉTA-bejelentkezés és szinkron | Felhasználói visszaigazolás alapján működik; ebben a változatban nem módosult |
 
 A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 
@@ -131,7 +148,7 @@ A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a té
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`.
+Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat aláíratlan release APK-t készít; nyilvános terjesztés előtt saját kiadási kulccsal kell aláírni.
 
 Csatlakoztatott telefonra vagy emulátorra telepítéshez futtasd az alábbi parancsot.
 

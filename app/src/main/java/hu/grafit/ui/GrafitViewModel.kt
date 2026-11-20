@@ -87,7 +87,10 @@ class GrafitViewModel(app: Application) : AndroidViewModel(app) {
     fun loadSubjects() {
         if (demo || busy || subjectsAttempted) return
         subjectsAttempted = true
-        work { withContext(Dispatchers.IO) { api.getSubjects() } }
+        work {
+            val updated = withContext(Dispatchers.IO) { api.getSubjects(); api.cached() }
+            if (updated != null) data = updated
+        }
     }
     fun onResume() {
         if (signedIn && !demo && !busy && System.currentTimeMillis() - lastSyncAttempt >= 120_000) reload()

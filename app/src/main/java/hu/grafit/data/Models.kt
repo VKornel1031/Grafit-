@@ -45,12 +45,15 @@ data class Absence(val subject: String, val date: String, val state: String, val
         j.text("IgazolasAllapota"), j.optInt("KesesPercben")) }
 }
 data class SchoolData(val student: String, val school: String, val grades: List<Grade>,
-                      val lessons: List<Lesson>, val absences: List<Absence>, val syncedAt: Long = System.currentTimeMillis(), val tasks: List<SchoolTask> = emptyList()) {
+                      val lessons: List<Lesson>, val absences: List<Absence>, val syncedAt: Long = System.currentTimeMillis(), val tasks: List<SchoolTask> = emptyList(),
+                      val subjectNames: List<String> = emptyList()) {
     companion object {
         fun parse(j: JSONObject) = SchoolData(j.getJSONObject("student").text("Nev"),
             j.getJSONObject("student").text("IntezmenyNev"), (j.optJSONArray("grades") ?: JSONArray()).objects().map(Grade::parse),
             (j.optJSONArray("lessons") ?: JSONArray()).objects().map(Lesson::parse).sortedBy { it.start },
-            (j.optJSONArray("absences") ?: JSONArray()).objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty())
+            (j.optJSONArray("absences") ?: JSONArray()).objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty(),
+            j.optJSONArray("subjects")?.objects().orEmpty().filter { it.optInt("tipusId", 0) == 0 }
+                .map { it.text("tantargyNev").trim() }.filter { it.isNotBlank() }.distinct())
         fun demo(): SchoolData {
             val subjects = listOf("Matematika", "Magyar irodalom", "Történelem", "Angol nyelv", "Informatika")
             val date = today()

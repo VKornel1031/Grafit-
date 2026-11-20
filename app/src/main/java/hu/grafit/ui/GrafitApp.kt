@@ -419,22 +419,81 @@ private fun Timetable(vm: GrafitViewModel) {
 @Composable
 private fun Grades(vm: GrafitViewModel) {
     LaunchedEffect(vm.busy, vm.demo) { if (!vm.busy && !vm.demo) vm.loadSubjects() }
-    var subject by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedSubject by rememberSaveable { mutableStateOf<String?>(null) }
     val all = vm.data?.grades.orEmpty()
-    val shown = all.filter { subject == null || it.subject == subject }.sortedByDescending { it.date }
+    val grouped = remember(all) { all.groupBy { it.subject } }
+    val subjects = remember(grouped, vm.data?.lessons, vm.data?.subjectNames) {
+        (grouped.keys + vm.data?.subjectNames.orEmpty() + vm.data?.lessons.orEmpty().map { it.subject })
+            .filter { it.isNotBlank() }.distinct().sortedWith(java.text.Collator.getInstance(hu))
+    }
+    val yearly = remember(all) { annualAverage(all)?.let(::roundedGradeAverage) }
+    val scholarship = technikumScholarshipEstimate(yearly)
+    val hidden = vm.appearance.hideGrades
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Heading("Jegyeid", "Minden eredmény egy helyen") }
-        item { Metric("Súlyozott évközi átlag", if (vm.appearance.hideGrades) "••" else average(shown)?.let { "%.2f".format(hu, it) } ?: "—", Modifier.fillMaxWidth()) }
-        item {
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = subject == null, onClick = { subject = null }, label = { Text("Összes") })
-                all.map { it.subject }.distinct().sorted().forEach { s ->
-                    FilterChip(selected = subject == s, onClick = { subject = s }, label = { Text(s) })
+        item { Heading("Jegyeid", "Tantárgyak és átlagok") }
+        if (subjects.isEmpty()) item { Empty("Még nincsenek tantárgyak vagy jegyek.") }
+        subjects.forEach { name ->
+            val grades = grouped[name].orEmpty()
+            item(key = "subject:$name") {
+                val expanded = selectedSubject == name
+                Card(modifier = Modifier.animateItem(), onClick = { selectedSubject = if (expanded) null else name },
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .45f))) {
+                    Row(Modifier.fillMaxWidth().padding(if (vm.appearance.compact) 12.dp else 18.dp),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Text(name, fontWeight = FontWeight.Medium)
+                            Text("Tantárgy átlag", style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(if (hidden) "••" else average(grades)?.let { "%.2f".format(hu, roundedGradeAverage(it)) } ?: "—",
+                            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary)
+                        Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                            if (expanded) "Jegyek összecsukása" else "Jegyek megnyitása")
+                    }
                 }
             }
+            if (selectedSubject == name) {
+                if (grades.isEmpty()) item(key = "empty:$name") { Empty("Ebből a tantárgyból még nincs jegy.") }
+                items(grades.sortedByDescending { it.date }) { GradeRow(it, vm.appearance) }
+            }
         }
-        if (shown.isEmpty()) item { Empty("Még nincsenek jegyek.") }
-        items(shown) { GradeRow(it, vm.appearance) }
+        item {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                GradeSummaryWidget("Éves átlag", if (hidden) "••" else yearly?.let { "%.2f".format(hu, it) } ?: "—",
+                    "Tantárgyi átlagok átlaga", Icons.Outlined.Insights, Modifier.weight(1f).fillMaxHeight())
+                GradeSummaryWidget("Meghatározott ösztöndíj átlag alapján",
+                    if (hidden) "••" else scholarship?.let { java.text.NumberFormat.getIntegerInstance(hu).format(it) + " Ft" } ?: "—",
+                    "Becsült összeg / hó", Icons.Outlined.AccountBalanceWallet, Modifier.weight(1f).fillMaxHeight())
+            }
+        }
+        item {
+            Text("Az éves átlag az elérhető, súlyozott tantárgyi átlagok számtani átlaga, nem a bizonyítvány átlaga. " +
+                "Az ösztöndíj a jelenlegi átlag alapján becsült összeg a technikumi szakirányú oktatásra. " +
+                "A hivatalos összeg az előző tanév év végi osztályzataitól és a jogosultságtól függ. " +
+                "Ágazati alapoktatásban jogosultság esetén havi 8 000 Ft jár. " +
+                "Hiányzó vagy 2,00 alatti átlagnál nem adunk becslést.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TextButton(onClick = { uriHandler.openUri("https://szfszc.hu/kepzesek/osztondijak") }) {
+                Text("Ösztöndíjszabályok · SZFSZC")
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradeSummaryWidget(label: String, value: String, description: String, icon: ImageVector, modifier: Modifier) {
+    Surface(modifier, shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = .6f))) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.weight(1f))
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 @Composable
@@ -543,7 +602,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.3.1") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.0") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

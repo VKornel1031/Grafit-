@@ -12,18 +12,22 @@ import kotlinx.coroutines.launch
 internal class OperationState {
     var busy by mutableStateOf(false)
         private set
+    var authenticationRequired by mutableStateOf(false)
+        private set
     var error by mutableStateOf<String?>(null)
 
     fun launch(scope: CoroutineScope, failureMessage: String, action: suspend () -> Unit) {
         if (busy) return
         busy = true
         error = null
+        authenticationRequired = false
         scope.launch {
             try {
                 action()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                authenticationRequired = (e as? ApiFailure)?.authenticationRequired == true
                 error = if (e is ApiFailure || e is IllegalArgumentException) e.message else failureMessage
             } finally {
                 busy = false

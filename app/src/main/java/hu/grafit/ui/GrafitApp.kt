@@ -169,9 +169,9 @@ private fun AppContent(vm: GrafitViewModel) {
                 Surface(color = MaterialTheme.colorScheme.errorContainer) {
                     Column(Modifier.fillMaxWidth().padding(16.dp)) {
                         Text(error, color = MaterialTheme.colorScheme.onErrorContainer)
-                        Row {
+                        FlowRow {
                             if (active) TextButton(onClick = vm::reload, enabled = !vm.busy) { Text("Újrapróbálás") }
-                            if (vm.signedIn) TextButton(onClick = { openLogin() }, enabled = !vm.profileBusy) { Text("Bejelentkezés újra") }
+                            if (vm.signedIn && vm.authenticationRequired) TextButton(onClick = { openLogin() }, enabled = !vm.profileBusy) { Text("Bejelentkezés újra") }
                             TextButton(onClick = vm::dismissError) { Text("Bezárás") }
                         }
                     }

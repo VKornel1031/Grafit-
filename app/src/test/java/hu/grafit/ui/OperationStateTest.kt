@@ -69,6 +69,23 @@ class OperationStateTest {
         assertNull(edits.error)
     }
 
+    @Test fun loginActionIsOnlyOfferedForAuthenticationFailures() = runBlocking {
+        val operation = OperationState()
+        operation.launch(this, "Hálózati hiba") { throw hu.grafit.data.ApiFailure(503) }
+        yield()
+        assertFalse(operation.authenticationRequired)
+        operation.launch(this, "Hálózati hiba") { throw hu.grafit.data.ApiFailure(400) }
+        yield()
+        assertFalse(operation.authenticationRequired)
+        operation.launch(this, "Hálózati hiba") { throw hu.grafit.data.ApiFailure(400, authenticationRequired = true) }
+        yield()
+        assertTrue(operation.authenticationRequired)
+        operation.launch(this, "Hálózati hiba") { }
+        yield()
+        assertFalse(operation.authenticationRequired)
+        assertNull(operation.error)
+    }
+
     @Test fun cancellationReleasesTheSaveStateWithoutReportingAnError() = runBlocking {
         val edits = OperationState()
         val owner = Job()

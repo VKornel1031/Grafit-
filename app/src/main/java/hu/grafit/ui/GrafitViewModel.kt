@@ -31,6 +31,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     private var accountChanging by mutableStateOf(false)
     val busy: Boolean get() = syncOperation.busy
     val error: String? get() = syncOperation.error
+    val authenticationRequired: Boolean get() = syncOperation.authenticationRequired
     val profileBusy: Boolean get() = profileOperation.busy || accountChanging
     val profileError: String? get() = profileOperation.error
     internal val updates = UpdateController(app, viewModelScope)
@@ -77,7 +78,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         if (api.syncIssues.isNotEmpty()) {
             val names = api.syncIssues.take(3).joinToString(", ")
             val remaining = if (api.syncIssues.size > 3) " és további ${api.syncIssues.size - 3}" else ""
-            syncOperation.error = "Néhány részfrissítés sikertelen ($names$remaining)."
+            syncOperation.error = "Nem frissült: $names$remaining. A mentett adatok megmaradtak. Próbáld újra később."
         }
     }
     private fun syncAll() = work {
@@ -86,15 +87,16 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     }
     fun reload() = work {
         if (!demo) {
-            data = withContext(Dispatchers.IO) {
-                if (api.syncIssues.isNotEmpty()) api.load(date, ::publishSync) else api.refreshHomeFeed(date, ::publishSync)
-            }
+            data = withContext(Dispatchers.IO) { api.refreshHomeFeed(date, ::publishSync) }
             showSyncIssues()
         }
     }
     fun selectDate(value: LocalDate) {
         if (busy) return
         date = value
+        if (signedIn && !demo) work("Nem sikerült betölteni a kiválasztott hetet. A mentett órák továbbra is elérhetők.") {
+            data = withContext(Dispatchers.IO) { api.getTimetableWeek(value) }
+        }
     }
     fun startDemo() {
         if (busy || profileBusy) return

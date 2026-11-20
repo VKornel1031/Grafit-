@@ -73,16 +73,16 @@ class KretaSyncTest {
     private fun lesson(uid: String, day: String) = JSONObject().put("Uid", uid).put("Nev", "Matematika")
         .put("KezdetIdopont", "${day}T08:00:00+01:00").put("VegIdopont", "${day}T08:45:00+01:00")
 
-    @Test fun fullSyncFetchesSchoolYearAndPublishesProgress() {
+    @Test fun startupSyncFetchesOnlyCurrentAndSelectedWeeksAndPublishesProgress() {
         val progress = CopyOnWriteArrayList<SchoolData>()
         val result = api.load(date, progress::add)
         assertEquals("Teszt Diák", result.student)
         assertEquals(1, result.grades.size)
-        assertTrue(result.lessons.size > 20)
+        assertTrue(result.lessons.isNotEmpty())
         assertTrue(progress.isNotEmpty())
         assertTrue(api.syncIssues.isEmpty())
         val ranges = requests.filter { it.requestUrl!!.encodedPath.endsWith("OrarendElemek") }
-        assertTrue(ranges.size > 20)
+        assertTrue(ranges.size in 1..2)
         ranges.forEach {
             val from = LocalDate.parse(it.requestUrl!!.queryParameter("datumTol"))
             val to = LocalDate.parse(it.requestUrl!!.queryParameter("datumIg"))
@@ -92,6 +92,109 @@ class KretaSyncTest {
         }
         assertTrue(requests.any { it.requestUrl!!.encodedPath.endsWith("HaziFeladatok") && it.requestUrl!!.queryParameter("datumTol") == "2026-09-01" })
     }
+    @Test fun browsingFetchesMissingWeeksOnceIncludingEmptyWeeksAndKeepsOtherLessons() {
+        api.load(today())
+        val before = requireNotNull(api.cached()).lessons
+        val selected = today().plusWeeks(20)
+        val monday = selected.minusDays((selected.dayOfWeek.value - 1).toLong())
+        val delegate = server.dispatcher
+        val calls = AtomicInteger()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath.endsWith("OrarendElemek")) {
+                    calls.incrementAndGet()
+                    val from = LocalDate.parse(request.requestUrl!!.queryParameter("datumTol"))
+                    assertTrue(from == monday || from == today().minusDays((today().dayOfWeek.value - 1).toLong()))
+                    return json("[]")
+                }
+                return delegate.dispatch(request)
+            }
+        }
+        repeat(3) { api.getTimetableWeek(selected.plusDays(it.toLong())) }
+        assertEquals(1, calls.get())
+        assertEquals(before, requireNotNull(api.cached()).lessons)
+        // Range coverage survives a new API instance (app restart).
+        val restarted = KretaApi(store, OkHttpClient(), "test-agent", server.url("/token").toString(),
+            { server.url("/").toString().trimEnd('/') }, pause = {})
+        restarted.getTimetableWeek(selected)
+        assertEquals(1, calls.get())
+        // A user refresh always fetches that week again, including changes to an empty week.
+        api.refreshHomeFeed(selected)
+        assertEquals(3, calls.get())
+    }
+
+    @Test fun failedWeekRemainsRetryableAndDoesNotEraseCachedLessons() {
+        api.load(today())
+        val before = requireNotNull(api.cached()).lessons
+        val selected = today().minusWeeks(25)
+        val delegate = server.dispatcher
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath.endsWith("OrarendElemek")) MockResponse().setResponseCode(503)
+                else delegate.dispatch(request)
+        }
+        try { api.getTimetableWeek(selected); fail("Expected failure") }
+        catch (e: ApiFailure) { assertEquals(503, e.status) }
+        assertEquals(before, requireNotNull(api.cached()).lessons)
+        server.dispatcher = delegate
+        val result = api.getTimetableWeek(selected)
+        assertTrue(result.lessons.size > before.size)
+    }
+
+    @Test fun timetableBadRequestIsPartialFailureAndDoesNotAskForLogin() {
+        val delegate = server.dispatcher
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                if (request.requestUrl!!.encodedPath.endsWith("OrarendElemek")) MockResponse().setResponseCode(400)
+                else delegate.dispatch(request)
+        }
+        val result = api.load(today())
+        assertEquals(1, result.grades.size)
+        assertEquals(listOf("Aktuális órarend"), api.syncIssues)
+        assertEquals(1, tokenCalls.get())
+        assertFalse(ApiFailure(400).authenticationRequired)
+    }
+
+    @Test fun timetableRateLimitHonoursServerCooldownThenRecovers() {
+        api.load(today())
+        val delegate = server.dispatcher
+        val calls = AtomicInteger()
+        val waits = CopyOnWriteArrayList<Long>()
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath.endsWith("OrarendElemek") && calls.incrementAndGet() == 1) {
+                    return MockResponse().setResponseCode(429).setHeader("Retry-After", "7")
+                }
+                return delegate.dispatch(request)
+            }
+        }
+        val retrying = KretaApi(store, OkHttpClient(), "test-agent", server.url("/token").toString(),
+            { server.url("/").toString().trimEnd('/') }, pause = { waits.add(it); Unit })
+        assertTrue(retrying.getTimetableWeek(today().plusWeeks(25)).lessons.isNotEmpty())
+        assertEquals(listOf(7000L), waits)
+        assertEquals(2, calls.get())
+    }
+
+    @Test fun longServerCooldownDoesNotRetryEarlyOrEraseCachedData() {
+        api.load(today())
+        val before = requireNotNull(api.cached()).lessons
+        val calls = AtomicInteger()
+        val delegate = server.dispatcher
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath.endsWith("OrarendElemek")) {
+                    calls.incrementAndGet()
+                    return MockResponse().setResponseCode(429).setHeader("Retry-After", "120")
+                }
+                return delegate.dispatch(request)
+            }
+        }
+        try { api.getTimetableWeek(today().plusWeeks(25)); fail("Expected cooldown") }
+        catch (e: ApiFailure) { assertEquals(429, e.status) }
+        assertEquals(1, calls.get())
+        assertEquals(before, requireNotNull(api.cached()).lessons)
+    }
+
     @Test fun concurrent401ResponsesRotateRefreshTokenOnce() {
         rejectOldToken = true
         api.refreshHomeFeed()
@@ -157,9 +260,10 @@ class KretaSyncTest {
     @Test fun manualRefreshUpdatesTheSelectedTimetablePeriod() {
         val selected = today().plusWeeks(6)
         val result = api.refreshHomeFeed(selected)
+        val monday = selected.minusDays((selected.dayOfWeek.value - 1).toLong())
         assertTrue(requests.any { it.requestUrl!!.encodedPath.endsWith("OrarendElemek") &&
-            it.requestUrl!!.queryParameter("datumTol") == selected.toString() })
-        assertTrue(result.lessons.any { it.start.toLocalDate() == selected })
+            it.requestUrl!!.queryParameter("datumTol") == monday.toString() })
+        assertTrue(result.lessons.any { it.start.toLocalDate() == monday })
     }
 
     @Test fun legacyFlattenedTasksSurvivePartialCacheMigration() {

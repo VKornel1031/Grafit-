@@ -52,6 +52,25 @@ class SchoolCache(private val store: StringStore) {
             }
             val combined = (retained + fresh.map { it.first }).associateBy { it.getString("Uid") }
             data.put("lessons", JSONArray(combined.values.toList()))
+            val ranges = array(data, "lessonRanges").objects().map {
+                LocalDate.parse(it.getString("from")) to LocalDate.parse(it.getString("to"))
+            } + (from to to)
+            val merged = mutableListOf<Pair<LocalDate, LocalDate>>()
+            for (range in ranges.sortedBy { it.first }) {
+                val previous = merged.lastOrNull()
+                if (previous != null && range.first <= previous.second) {
+                    merged[merged.lastIndex] = previous.first to maxOf(previous.second, range.second)
+                } else merged.add(range)
+            }
+            data.put("lessonRanges", JSONArray(merged.map {
+                JSONObject().put("from", it.first.toString()).put("to", it.second.toString())
+            }))
+        }
+    }
+
+    fun coversLessons(from: LocalDate, to: LocalDate): Boolean = synchronized(lock) {
+        array(raw(), "lessonRanges").objects().any {
+            LocalDate.parse(it.getString("from")) <= from && LocalDate.parse(it.getString("to")) >= to
         }
     }
 

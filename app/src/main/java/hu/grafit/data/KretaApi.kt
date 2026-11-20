@@ -50,9 +50,10 @@ object OAuth {
         }
     }
 }
-class ApiFailure(val status: Int) : Exception(when(status) {
-    400, 401 -> "A munkamenet lejárt. Jelentkezz be újra."
-    403 -> "A KRÉTA nem engedélyezte a hozzáférést."
-    429 -> "Túl sok kérés. Próbáld újra később."
+class ApiFailure(val status: Int, val authenticationRequired: Boolean = status == 401) : Exception(when {
+    authenticationRequired -> "A munkamenet lejárt. Jelentkezz be újra."
+    status == 400 -> "A KRÉTA nem tudta feldolgozni a kérést."
+    status == 403 -> "A KRÉTA nem engedélyezte a hozzáférést."
+    status == 429 -> "Túl sok kérés. Próbáld újra később."
     else -> "A KRÉTA szolgáltatás nem érhető el ($status)."
 })

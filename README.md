@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **Grafit 1.0.3** újra kis méretű, optimalizált éles APK-t készít: R8-kódoptimalizálással, erőforrás-zsugorítással és DEX-tömörítéssel. Az alkalmazásfunkciók kódja változatlan. Az Android 9+ csomag ugyanazt az aláírási történetet és állandó éles kulcsot használja, amellyel az 1.0.2 telepítését a felhasználó sikeresen visszaigazolta. A frissítés a már telepített alkalmazásra telepíthető, újratelepítés nélkül.
+A **Grafit 1.0.4** az optimalizált éles kiadás szinkronizálási hibajavítása. Az órarend indításkor az aktuális és következő hétre frissül; a többi hét megnyitáskor, a helyi gyorsítótárból vagy szükség esetén a KRÉTA-ból töltődik be. A csomag megtartja az R8-optimalizálást, az erőforrás-zsugorítást és a DEX-tömörítést. Az Android 9+ APK ugyanazt az aláírási történetet és állandó éles kulcsot használja, mint a sikeresen telepített verzió, így a meglévő alkalmazás frissíthető az adatok megtartásával.
 
 ## Funkciók
 
@@ -56,11 +56,11 @@ A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkez�
 
 A bejelentkezés a KRÉTA saját oldalán, külön natív Android WebView-képernyőn történik. Az oldal a betöltés közben is látható és használható. A képernyő tetején vékony folyamatjelző, visszalépési és újratöltési gomb segíti a navigációt. Lassú betöltés, hálózati hiba vagy hiányzó Android WebView esetén az alkalmazás hibaüzenetet jelenít meg. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
 
-A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Automatikus szinkron csak az alkalmazás indításakor és sikeres bejelentkezés után fut. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a lapváltás nem indít hálózati adatlekérést.
+A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Automatikus szinkron csak az alkalmazás indításakor és sikeres bejelentkezés után fut. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a fő navigációs lapok közötti váltás nem indít új szinkront. Korábban le nem töltött órarendi hét megnyitásakor csak az adott hét lekérése történik meg.
 
 - A tanulói adatlap és az osztályok, csoportok betöltése után frissülnek a jegyek, házi feladatok, dolgozatok és üzenetek.
-- Az órarend legfeljebb 14 napos részletekben töltődik le. Az első teljes szinkron a tanévet is feldolgozza, a későbbi frissítések a gyorsítótár és az ismert tanévvégi esemény alapján szűkíthetők.
-- A kézi frissítés az aktuális hetet, a kiválasztott órarendi időszakot és a kezdőlapon megjelenő adatokat is frissíti. Sikertelen teljes szinkron után az újrapróbálás a teljes folyamatot ismétli.
+- Az indítási szinkron az aktuális és következő hét órarendjét kéri le. Más hetek igény szerint töltődnek le; a sikeresen letöltött, tanóra nélküli hetek is helyben megmaradnak. A teljes tanév egyszerre történő letöltése nem terheli a szolgáltatást.
+- A kézi frissítés az aktuális hetet, a kiválasztott órarendi időszakot és a kezdőlapon megjelenő adatokat is frissíti. Az újrapróbálás sem indít teljes tanéves letöltést. A kliens legfeljebb három párhuzamos adatlekérést indít, és figyelembe veszi a szerver által kért újrapróbálási várakozást.
 - Az órarendi napválasztás csak a helyben tárolt adatok között navigál; új adatok lekéréséhez használd a Frissítés gombot.
 - A faliújság és a tanári feljegyzések frissítéskor, azonosító alapján egyesítve kerülnek a helyi tárba.
 - A hiányzások az órarend után frissülnek. A digitális tantárgyak az indítási és kézi szinkron részeként töltődnek le. A kliens az osztálycsoportok átlagainak lekérdezését is tartalmazza.
@@ -178,16 +178,16 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.0.3 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.0.4 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK, optimalizált éles APK fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
 | Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és indulási konstruktor ellenőrizve |
-| JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
+| JVM-tesztek | 71 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.3 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.4 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 
@@ -223,7 +223,7 @@ Az eszköztesztek fordítása és futtatása külön is indítható.
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, a teljes tanévi szinkront, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
+A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, az indítási és igény szerinti heti szinkront, a szerveroldali várakozási idő betartását, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
 
 A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t. A natív böngésző eszköztesztjei külön, csatlakoztatott Android-eszközön indíthatók.
 

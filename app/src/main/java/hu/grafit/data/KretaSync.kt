@@ -15,7 +15,7 @@ import java.io.IOException
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
-/** Native port of Firka's token recovery, full sync, home refresh, and range reconciliation. */
+/** Native port of Firka's token recovery, dataset sync, home refresh, and range reconciliation. */
 class KretaApi(
     private val store: StringStore,
     private val http: OkHttpClient = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS)
@@ -37,7 +37,7 @@ class KretaApi(
 
     private fun token(form: FormBody): JSONObject = http.newCall(Request.Builder().url(tokenUrl)
         .post(form).header("User-Agent", userAgent).header("Accept", "*/*").build()).execute().use {
-        if (!it.isSuccessful) throw ApiFailure(it.code)
+        if (!it.isSuccessful) throw ApiFailure(it.code, authenticationRequired = it.code in listOf(400, 401))
         JSONObject(it.body?.string() ?: throw IOException("Empty token response"))
     }
 
@@ -83,24 +83,33 @@ class KretaApi(
     }
 
     private fun request(path: String): String {
-        fun execute(credentials: JSONObject): Pair<Int, String> = http.newCall(Request.Builder()
+        fun execute(credentials: JSONObject): Triple<Int, String, String?> = http.newCall(Request.Builder()
             .url(schoolUrl(credentials.getString("institute")) + path)
             .header("Authorization", "Bearer ${credentials.getString("access_token")}")
             .header("apiKey", "21ff6c25-d1da-4a68-a811-c881a6057463")
             .header("Accept", "*/*").header("User-Agent", userAgent).build()).execute().use {
-                it.code to (it.body?.string() ?: "")
+                Triple(it.code, it.body?.string() ?: "", it.header("Retry-After"))
             }
         var last: Exception? = null
+        var retryAfterMillis = 0L
         for (attempt in 0..4) {
-            if (attempt > 0) pause(100L + (attempt - 1) * 500L)
+            if (attempt > 0) pause(maxOf(1000L shl (attempt - 1), retryAfterMillis))
             try {
                 val credentials = session()
                 var response = execute(credentials)
                 if (response.first == 401) response = execute(session(credentials.getString("access_token")))
+                retryAfterMillis = response.third?.let { value ->
+                    value.toLongOrNull()?.coerceIn(0, 86_400)?.times(1000)
+                        ?: runCatching {
+                            val retryAt = java.time.ZonedDateTime.parse(value, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME)
+                            (retryAt.toInstant().toEpochMilli() - now()).coerceAtLeast(0)
+                        }.getOrDefault(0)
+                } ?: 0L
                 if (response.first !in 200..299) throw ApiFailure(response.first)
                 return response.second
             } catch (e: ApiFailure) {
-                if (e.status !in listOf(408, 429) && e.status < 500) throw e
+                // Long server cooldowns are left to a later user refresh, never retried early.
+                if (retryAfterMillis > 30_000 || (e.status !in listOf(408, 429) && e.status < 500)) throw e
                 last = e
             } catch (e: IOException) {
                 if (e !is java.net.SocketTimeoutException) throw e
@@ -140,17 +149,17 @@ class KretaApi(
     }
 
     /** Coalesced by the caller and serialized against login/logout to protect account boundaries. */
-    @Synchronized fun load(date: LocalDate, onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, true, onProgress)
-    @Synchronized fun refreshHomeFeed(date: LocalDate = today(), onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, false, onProgress)
+    @Synchronized fun load(date: LocalDate, onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, onProgress)
+    @Synchronized fun refreshHomeFeed(date: LocalDate = today(), onProgress: (SchoolData) -> Unit = {}): SchoolData = sync(date, onProgress)
 
-    private fun sync(date: LocalDate, wholeSchoolYear: Boolean, onProgress: (SchoolData) -> Unit): SchoolData {
+    private fun sync(date: LocalDate, onProgress: (SchoolData) -> Unit): SchoolData {
         session()
         val issues = java.util.Collections.synchronizedList(mutableListOf<String>())
         fun publish() { cache.publish(onProgress) }
         fun attempt(label: String, action: () -> Unit) {
             try { action(); publish() }
             catch (e: ApiFailure) {
-                if (e.status in listOf(400, 401)) throw e
+                if (e.authenticationRequired) throw e
                 issues.add(label)
             } catch (e: IOException) { issues.add(label) }
             catch (e: org.json.JSONException) { issues.add(label) }
@@ -166,7 +175,7 @@ class KretaApi(
         val current = today()
         val start = SchoolCache.firstSchoolDay(current)
         val monday = current.minusDays((current.dayOfWeek.value - 1).toLong())
-        val weekEnd = monday.plusDays(if (wholeSchoolYear) 14 else 7)
+        val weekEnd = monday.plusDays(14)
         val jobs = listOf<Pair<String, () -> Unit>>(
             "Tantárgyak" to { cache.replace("subjects", collection("/dktapi/intezmenyek/munkaterek/tanulok")) },
             "Jegyek" to { replace("grades", "Ertekelesek", validate = Grade::parse) },
@@ -177,36 +186,15 @@ class KretaApi(
             "Aktuális órarend" to { lessons(monday, weekEnd) }
         )
         runBlocking {
-            val permits = Semaphore(5)
+            val permits = Semaphore(3)
             jobs.map { (label, action) -> async(Dispatchers.IO) { permits.withPermit { attempt(label, action) } } }.awaitAll()
         }
         if (issues.none { it == "Faliújság" || it == "Feljegyzések" }) cache.update { it.put("messagesSyncedAt", now()) }
-        if (wholeSchoolYear && !issues.contains("Aktuális órarend")) {
-            val data = cache.snapshot()
-            val lastDay = SchoolCache.array(data, "lessons").objects().filter {
-                it.text("Nev") == "Utolsó tanítási nap"
-            }.map { localTime(it.getString("KezdetIdopont")).toLocalDate().plusDays(1) }
-                .filter { it > start && it <= start.plusYears(1) }.maxOrNull()
-            val end = if (lastDay == null) start.plusYears(1) else minOf(lastDay, monday.plusDays(14))
-            val historyEnd = monday.minusDays(7)
-            val cachedHistory = SchoolCache.array(data, "lessons").objects().map {
-                localTime(it.getString("KezdetIdopont")).toLocalDate()
-            }.filter { it >= start && it < historyEnd }.maxOrNull()
-            val from = if (lastDay != null) cachedHistory ?: start else start
-            val ranges = SchoolCache.chunks(from, end).flatMap { (from, to) ->
-                buildList {
-                    if (from < monday) add(from to minOf(to, monday))
-                    if (to > weekEnd) add(maxOf(from, weekEnd) to to)
-                }
-            }
-            runBlocking {
-                val permits = Semaphore(5)
-                ranges.map { (from, to) -> async(Dispatchers.IO) {
-                    permits.withPermit { attempt("Órarend $from – $to") { lessons(from, to) } }
-                } }.awaitAll()
-            }
+        // Fetch other weeks on demand instead of flooding KRÉTA with an entire year.
+        if (date < monday || date >= weekEnd) attempt("Kiválasztott hét") {
+            val selectedMonday = date.minusDays((date.dayOfWeek.value - 1).toLong())
+            lessons(selectedMonday, selectedMonday.plusDays(7))
         }
-        if (date < monday || date >= weekEnd) attempt("Kiválasztott hét") { lessons(date, date.plusDays(14)) }
         attempt("Hiányzások") { replace("absences", "Mulasztasok", validate = Absence::parse) }
         cache.update { data ->
             val teachers = SchoolCache.array(data, "lessons").objects().mapNotNull { lesson ->
@@ -239,6 +227,13 @@ class KretaApi(
             data.put("classAverages", groups)
         }
         return rows
+    }
+    /** Persist successful empty ranges too: a holiday week must not refetch on every tap. */
+    @Synchronized fun getTimetableWeek(date: LocalDate): SchoolData {
+        val monday = date.minusDays((date.dayOfWeek.value - 1).toLong())
+        val end = monday.plusDays(7)
+        if (!cache.coversLessons(monday, end)) lessons(monday, end)
+        return cached() ?: throw IOException("No usable school data")
     }
     @Synchronized fun getLessonsCovering(from: LocalDate, to: LocalDate): SchoolData {
         SchoolCache.chunks(from, to).forEach { (start, end) -> lessons(start, end) }

@@ -86,7 +86,7 @@ class GradeSummaryTest {
     }
 
     @Test fun realSubjectsWithNoGradesAndCancelledLessonsRemainInTheSubjectList() {
-        val data = SchoolData.demo().copy(subjectNames = listOf("Fizika"), grades = listOf(mark("Csak jegy", 5)),
+        val data = SchoolData.demo().copy(subjects = listOf(SchoolSubject("Fizika")),  grades = listOf(mark("Csak jegy", 5)),
             lessons = SchoolData.demo().lessons.take(1).map { it.copy(subject = "Elmaradt óra tantárgya", state = "Elmaradt") })
         assertEquals(setOf("Fizika", "Csak jegy", "Elmaradt óra tantárgya"), data.gradeSubjects().toSet())
     }

@@ -414,20 +414,20 @@ private fun Timetable(vm: GrafitViewModel) {
 @Composable
 private fun Grades(vm: GrafitViewModel) {
     var selectedSubject by rememberSaveable { mutableStateOf<String?>(null) }
-    val all = vm.data?.grades.orEmpty()
-    val grouped = remember(all) { all.groupBy { it.subject } }
     val subjects = remember(vm.data) {
-        vm.data?.gradeSubjects().orEmpty().sortedWith(java.text.Collator.getInstance(hu))
+        val collator = java.text.Collator.getInstance(hu)
+        vm.data?.gradeSummaries().orEmpty().sortedWith { a, b -> collator.compare(a.name, b.name) }
     }
-    val yearly = remember(all) { annualAverage(all)?.let(::roundedGradeAverage) }
+    val yearly = remember(vm.data) { vm.data?.annualAverage()?.let(::roundedGradeAverage) }
     val scholarship = technikumScholarshipEstimate(yearly)
     val hidden = vm.appearance.hideGrades
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Heading("Jegyeid", "Tantárgyak és átlagok") }
         if (subjects.isEmpty()) item { Empty("Még nincsenek tantárgyak vagy jegyek.") }
-        subjects.forEach { name ->
-            val grades = grouped[name].orEmpty()
+        subjects.forEach { summary ->
+            val name = summary.name
+            val grades = summary.grades
             item(key = "subject:$name") {
                 val expanded = selectedSubject == name
                 Card(modifier = Modifier.animateItem(), onClick = { selectedSubject = if (expanded) null else name },
@@ -595,7 +595,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             TextButton(onClick = onLogout, enabled = !vm.busy && !vm.profileBusy) { Icon(Icons.AutoMirrored.Outlined.Logout, null); Spacer(Modifier.width(10.dp)); Text(if (vm.demo) "Kilépés a bemutatóból" else "Kijelentkezés") }
         }
     }
-    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.1") },
+    if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit 0.4.2") },
         text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

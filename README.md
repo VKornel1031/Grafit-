@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.4.1 változat** kiszűri az ünnepnapokat és munkaszüneti napokat a tantárgyi listából, és szinkronizálás közben is engedi a helyi név és profilkép mentését. Az adatok az alkalmazás indításakor, bejelentkezés után vagy kézi frissítésre töltődnek le; a lapváltás, napválasztás és a háttérből visszatérés a gyorsítótárat használja. A tantárgyi átlagok, az ösztöndíjbecslés és a monokróm, témázható grafithegy ikon továbbra is elérhető.
+A **0.4.2 változat** egységesíti a Jegyek oldalon megjelenő tantárgyakat. Az azonos KRÉTA-azonosítóhoz tartozó eltérő nevek, valamint a kis- és nagybetűben, szóközökben vagy láthatatlan karakterekben eltérő nevek egy sorban jelennek meg, az összes hozzájuk tartozó jeggyel. Az éves átlag minden tantárgyat egyszer vesz figyelembe. A helyi profilmentés és az indításkor vagy kézzel végzett szinkron továbbra is elérhető.
 
 ## Funkciók
 
@@ -78,7 +78,7 @@ A natív felület a Firka mozgásainak időzítését és görbéit alkalmazza.
 
 ## Tantárgyi átlagok és ösztöndíj
 
-A **Jegyek** oldalon minden elérhető tantárgy mellett a súlyozott évközi átlaga látható. A tantárgy megérintésével megnyithatók az egyes értékelések. A jegy nélküli tantárgyak átlaga „—”. Az oldal alján egymás mellett jelenik meg az **Éves átlag** és a **Meghatározott ösztöndíj átlag alapján** kártya. A jegyek elrejtése ezekre az összesítésekre is vonatkozik.
+A **Jegyek** oldalon minden elérhető tantárgy mellett a súlyozott évközi átlaga látható. A több forrásból érkező azonos tantárgyak egyetlen sorban szerepelnek; a különböző névváltozatokhoz tartozó jegyek közös átlagba számítanak. A tantárgy megérintésével megnyithatók az egyes értékelések. A jegy nélküli tantárgyak átlaga „—”. Az oldal alján egymás mellett jelenik meg az **Éves átlag** és a **Meghatározott ösztöndíj átlag alapján** kártya. A jegyek elrejtése ezekre az összesítésekre is vonatkozik.
 
 Az éves átlag az értékeléssel rendelkező tantárgyak súlyozott átlagainak számtani átlaga: minden tantárgy azonos súllyal számít. Ez évközi tájékoztatás, nem a bizonyítvány hivatalos átlaga.
 
@@ -121,15 +121,15 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.4.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+A 0.4.2 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK és release APK fordítása | Sikeres; a debug aláírás ellenőrizve, a release APK aláíratlan |
-| JVM-tesztek | 39 sikeres teszt, ünnepnap-szűréssel, párhuzamos helyi mentéssel és a kézi frissítés ellenőrzésével |
+| JVM-tesztek | 46 sikeres teszt, tantárgy- és névváltozatok egységesítésével, átlagszámítással és a korábbi regressziós ellenőrzésekkel |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.4.1 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; a 0.4.2 éles eszközös ellenőrzése még szükséges |
 
 A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 

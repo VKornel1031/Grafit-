@@ -18,12 +18,14 @@ fun localTime(value: String): LocalDateTime = runCatching {
 }.getOrElse { LocalDateTime.parse(value) }
 
 data class Grade(val id: String, val subject: String, val value: String, val number: Int?, val weight: Int,
-                 val date: String, val topic: String, val teacher: String, val type: String, val valueType: String = "Osztalyzat") {
+                 val date: String, val topic: String, val teacher: String, val type: String, val valueType: String = "Osztalyzat",
+                 val subjectId: String? = null) {
     companion object {
         fun parse(j: JSONObject) = Grade(j.text("Uid"), j.subject(), j.text("SzamErtek", j.text("SzovegesErtek")),
             if (j.isNull("SzamErtek")) null else j.optInt("SzamErtek").takeIf { it in 1..5 },
             j.optInt("SulySzazalekErteke", 0), j.text("KeszitesDatuma").take(10), j.text("Tema"),
-            j.text("ErtekeloTanarNeve"), j.optJSONObject("Tipus")?.text("Nev") ?: "", j.optJSONObject("ErtekFajta")?.text("Nev") ?: "")
+            j.text("ErtekeloTanarNeve"), j.optJSONObject("Tipus")?.text("Nev") ?: "", j.optJSONObject("ErtekFajta")?.text("Nev") ?: "",
+            j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() })
     }
 }
 fun average(grades: List<Grade>): Double? {
@@ -34,28 +36,33 @@ fun average(grades: List<Grade>): Double? {
 
 data class Lesson(val id: String, val subject: String, val start: LocalDateTime, val end: LocalDateTime,
                   val room: String, val teacher: String, val topic: String, val state: String,
-                  val hasSubject: Boolean = true) {
+                  val hasSubject: Boolean = true, val subjectId: String? = null) {
     companion object {
         fun parse(j: JSONObject) = Lesson(j.text("Uid"), j.subject(), localTime(j.getString("KezdetIdopont")),
             localTime(j.getString("VegIdopont")), j.text("TeremNeve"), j.text("HelyettesTanarNeve", j.text("TanarNeve")),
             j.text("Tema"), j.optJSONObject("Allapot")?.text("Nev") ?: "",
-            j.optJSONObject("Tantargy")?.text("Nev")?.isNotBlank() == true)
+            j.optJSONObject("Tantargy")?.text("Nev")?.isNotBlank() == true,
+            j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() })
     }
 }
 data class Absence(val subject: String, val date: String, val state: String, val minutes: Int) {
     companion object { fun parse(j: JSONObject) = Absence(j.subject(), j.text("Datum").take(10),
         j.text("IgazolasAllapota"), j.optInt("KesesPercben")) }
 }
+data class SchoolSubject(val name: String, val id: String? = null)
+
 data class SchoolData(val student: String, val school: String, val grades: List<Grade>,
                       val lessons: List<Lesson>, val absences: List<Absence>, val syncedAt: Long = System.currentTimeMillis(), val tasks: List<SchoolTask> = emptyList(),
-                      val subjectNames: List<String> = emptyList()) {
+                      val subjects: List<SchoolSubject> = emptyList()) {
+    val subjectNames: List<String> get() = subjects.map { it.name }.distinct()
     companion object {
         fun parse(j: JSONObject) = SchoolData(j.getJSONObject("student").text("Nev"),
             j.getJSONObject("student").text("IntezmenyNev"), (j.optJSONArray("grades") ?: JSONArray()).objects().map(Grade::parse),
             (j.optJSONArray("lessons") ?: JSONArray()).objects().map(Lesson::parse).sortedBy { it.start },
             (j.optJSONArray("absences") ?: JSONArray()).objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty(),
             j.optJSONArray("subjects")?.objects().orEmpty().filter { it.optInt("tipusId", 0) == 0 }
-                .map { it.text("tantargyNev").trim() }.filter { it.isNotBlank() }.distinct())
+                .map { SchoolSubject(it.text("tantargyNev").trim(), it.text("tantargyId").takeIf { id -> id.isNotBlank() }) }
+                .filter { it.name.isNotBlank() }.distinct())
         fun demo(): SchoolData {
             val subjects = listOf("Matematika", "Magyar irodalom", "Történelem", "Angol nyelv", "Informatika")
             val date = today()

@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.MotionEvent
+import android.view.InputDevice
 import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -29,6 +30,7 @@ class KretaLoginActivityTest {
     @Test fun nativeBrowserRendersAndAcceptsTouchWhileLoading() {
         ActivityScenario.launch<KretaLoginActivity>(intent()).use { scenario ->
             val loaded = CountDownLatch(1)
+            instrumentation.waitForIdleSync()
             scenario.onActivity { activity ->
                 val browser = activity.findViewById<WebView>(R.id.kreta_login_webview)
                 assertNotNull("The Android test image must include a WebView provider", browser)
@@ -36,17 +38,23 @@ class KretaLoginActivityTest {
                 assertTrue(browser.height > 200)
                 browser.stopLoading()
                 browser.webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView, url: String) { loaded.countDown() }
+                    override fun onPageFinished(view: WebView, url: String) {
+                        if (url == "https://idp.e-kreta.hu/grafit-local-fixture") {
+                            view.evaluateJavascript("document.getElementById('submit') !== null") {
+                                if (it == "true") loaded.countDown()
+                            }
+                        }
+                    }
                 }
                 // The production progress bar remains visible throughout this fixture load.
                 activity.findViewById<View>(R.id.kreta_login_progress).visibility = View.VISIBLE
-                browser.loadDataWithBaseURL("https://idp.e-kreta.hu/", """
+                browser.loadDataWithBaseURL("https://idp.e-kreta.hu/grafit-local-fixture", """
                     <!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
                     <title>Login fixture</title></head><body style="font:20px sans-serif;padding:20px">
                     <h2>KRÉTA login test</h2><label>Username <input id="username"></label><br><br>
                     <button id="submit" style="width:220px;height:60px" onclick="document.title='submitted:'+document.getElementById('username').value">Continue</button>
                     </body></html>
-                """.trimIndent(), "text/html", "UTF-8", null)
+                """.trimIndent(), "text/html", "UTF-8", "https://idp.e-kreta.hu/grafit-local-fixture")
             }
             assertTrue("Local HTML did not finish loading", loaded.await(60, TimeUnit.SECONDS))
             val rect = JSONObject(js(scenario, """
@@ -67,12 +75,33 @@ class KretaLoginActivityTest {
                 activity.findViewById<View>(R.id.kreta_login_progress).visibility = View.VISIBLE
             }
             val time = SystemClock.uptimeMillis()
-            instrumentation.sendPointerSync(MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0))
-            instrumentation.sendPointerSync(MotionEvent.obtain(time, time + 100, MotionEvent.ACTION_UP, x, y, 0))
+            val down = MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN, x, y, 0)
+            val up = MotionEvent.obtain(time, time + 100, MotionEvent.ACTION_UP, x, y, 0)
+            down.source = InputDevice.SOURCE_TOUCHSCREEN
+            up.source = InputDevice.SOURCE_TOUCHSCREEN
+            try {
+                scenario.onActivity { activity ->
+                    val origin = IntArray(2)
+                    activity.window.decorView.getLocationOnScreen(origin)
+                    down.offsetLocation(-origin[0].toFloat(), -origin[1].toFloat())
+                    up.offsetLocation(-origin[0].toFloat(), -origin[1].toFloat())
+                    assertTrue(activity.dispatchTouchEvent(down))
+                    assertTrue(activity.dispatchTouchEvent(up))
+                }
+            } finally {
+                down.recycle()
+                up.recycle()
+            }
             instrumentation.waitForIdleSync()
-            assertEquals("submitted:tanulo", js(scenario, "document.title"))
+            val deadline = SystemClock.uptimeMillis() + 15_000
+            var title = js(scenario, "document.title")
+            while (title != "submitted:tanulo" && SystemClock.uptimeMillis() < deadline) {
+                SystemClock.sleep(100)
+                title = js(scenario, "document.title")
+            }
             val screenshot = instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/grafit-login-fixture.png")
             android.os.ParcelFileDescriptor.AutoCloseInputStream(screenshot).use { it.readBytes() }
+            assertEquals("submitted:tanulo", title)
         }
     }
 

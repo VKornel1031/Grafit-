@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **0.3.0 fejlesztői változat** a Firka bejelentkezési és szinkronizálási működésének natív Kotlin-adaptációjára, a helyben mentett személyes profilra és az animált Material 3 kezelőfelületre épül.
+A **0.3.1 fejlesztői változat** külön natív Android-képernyőre helyezi a KRÉTA bejelentkezési böngészőjét. A Firka-alapú szinkronizálás, a helyben mentett személyes profil és az animált Material 3 felület teszi teljessé az alkalmazást.
 
 ## Funkciók
 
@@ -49,7 +49,7 @@ A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkez�
 
 ## Bejelentkezés és szinkronizálás
 
-A bejelentkezés beágyazott Android WebView-ban, a KRÉTA saját oldalán történik. A böngésző betöltésjelzőt, hibaüzenetet és újrapróbálási lehetőséget biztosít. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
+A bejelentkezés a KRÉTA saját oldalán, külön natív Android WebView-képernyőn történik. Az oldal a betöltés közben is látható és használható. A képernyő tetején vékony folyamatjelző, visszalépési és újratöltési gomb segíti a navigációt. Lassú betöltés, hálózati hiba vagy hiányzó Android WebView esetén az alkalmazás hibaüzenetet jelenít meg. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
 
 A szinkronizálási folyamat a Firka kliensének működését követi.
 
@@ -104,7 +104,17 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 A projekt aktív fejlesztés alatt áll. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-A 0.3.0 ellenőrzése során az APK fordítása, a 23 JVM-teszt, az Android Lint és az eszköztesztek fordítása sikeres volt. A szinkronizálást és a tokenmegújítást helyi HTTP-tesztszerver ellenőrzi. Az éles KRÉTA-bejelentkezés valódi fiókos és a felület eszközös ellenőrzése további validálást igényel. A felhőkörnyezet hálózati szabályzata blokkolja a KRÉTA azonosítási oldalát, a szoftveres emulátor rendszerhibái pedig megakadályozták a megbízható felületi tesztfuttatást. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
+A 0.3.1 ellenőrzései az alábbi területeket fedik le.
+
+| Ellenőrzés | Állapot |
+| --- | --- |
+| APK-fordítás és aláírás | Sikeres |
+| JVM-tesztek | 23 sikeres teszt |
+| Android Lint | 0 hiba, stílusjavaslatokkal |
+| Natív böngészőtesztek | 2 sikeres Android-eszközteszt |
+| Éles KRÉTA-bejelentkezés | Valódi fiókos ellenőrzést igényel |
+
+A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 
 ## Fejlesztőknek
 
@@ -138,7 +148,7 @@ Az eszköztesztek fordítása és futtatása külön is indítható.
 
 A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, a teljes tanévi szinkront, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
 
-A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t.
+A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t. Külön, hardveresen gyorsított Android-emulátoros feladat futtatja a natív bejelentkezési böngésző regressziós tesztjeit és menti a teszteredményeket.
 
 A projekt előkészített felhőkörnyezetében a parancsok előtt futtasd a `source scripts/cloud-env.sh` utasítást. A környezet eszközeinek újratelepítését és ellenőrzését a `bash scripts/cloud-setup.sh` végzi.
 

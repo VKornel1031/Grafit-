@@ -16,6 +16,8 @@ A nyilvános tanúsítvány: [release-signing-certificate.pem](release-signing-c
 
 A tulajdonos privát kulcsmentésében található a `grafit-release.p12` kulcstár és a `keystore-password.txt` jelszófájl; az alias `grafit-release`. Őrizd meg biztonságosan, a felhőkörnyezeten kívül is. Ezeket a fájlokat ne csatold GitHub Release-hez és ne add Git-verziókezeléshez. Minden későbbi kiadás ezt a kulcsot használja.
 
+Az aktuális jogosultságcsökkentő javítás az **1.0.1**, `versionCode = 10`, címkéje `v1.0.1`. A további példák ezt készítik elő.
+
 ## Helyi, ellenőrzött kiadás
 
 JDK 21, Android SDK 35 / Build Tools 35.0.0, Python 3 és Git szükséges. A munkafának tisztának kell lennie. A titkos értékeket a folyamat környezeti változóiból olvassa a build:
@@ -28,12 +30,12 @@ JDK 21, Android SDK 35 / Build Tools 35.0.0, Python 3 és Git szükséges. A mun
 A jelszavakat helyi, nem verziókezelt környezeti fájlból töltsd be. Ezután:
 
 ```bash
-GRAFIT_RELEASE_TAG=v1.0.0 bash scripts/build-release.sh
+GRAFIT_RELEASE_TAG=v1.0.1 bash scripts/build-release.sh
 ```
 
-A script optimalizált, aláírt APK-t és AAB-t fordít, futtatja a JVM-teszteket és a release lintet, és lefordítja az eszközteszteket. Ellenőrzi az APK aláírását, csomagnevét, kiadási jelzőit, igazítását és az R8 után megmaradt indulási konstruktort. A `dist/` könyvtárba csak nyilvános fájlok kerülnek:
+A script optimalizált, aláírt APK-t és AAB-t fordít, futtatja a JVM-teszteket és a release lintet, és lefordítja az eszközteszteket. Ellenőrzi az APK aláírását, csomagnevét, minimális jogosultságlistáját, kiadási jelzőit, igazítását és az R8 után megmaradt indulási konstruktort. A `dist/` könyvtárba csak nyilvános fájlok kerülnek:
 
-- `grafit-1.0.0.apk`
+- `grafit-1.0.1.apk`
 - `SHA256SUMS.txt`
 - `release-manifest.json` a verzióval, Git-committal és nyilvános aláírási ujjlenyomattal.
 
@@ -49,10 +51,10 @@ bash scripts/configure-release-secrets.sh /sajat/biztonsagos/kulcsmentes
 
 A script a GitHub CLI titkos tárolójába feltölti a `GRAFIT_KEYSTORE_BASE64`, `GRAFIT_STORE_PASSWORD`, `GRAFIT_KEY_ALIAS`, `GRAFIT_KEY_PASSWORD` repository secret értékeket. A parancs nem írja ki a kulcsot vagy a jelszót. A kulcsot sem a workflow, sem a build nem tölti fel nyilvános mellékletként.
 
-A `v1.0.0` Git-címke után a **Actions → Signed release → Run workflow** felületen válaszd a `v1.0.0` címkét, vagy futtasd:
+A `v1.0.1` Git-címke után a **Actions → Signed release → Run workflow** felületen válaszd a `v1.0.1` címkét, vagy futtasd:
 
 ```bash
-gh workflow run release.yml --repo VKornel1031/Grafit- -f tag=v1.0.0
+gh workflow run release.yml --repo VKornel1031/Grafit- -f tag=v1.0.1
 ```
 
 A workflow ellenőrzi a forráshoz tartozó verziót és az állandó aláírást, majd a megfelelő APK-val, ellenőrzőösszeggel és kiadási jegyzettel létrehozza a stabil GitHub Release-t. Aláírási adatok nélkül nem publikál. A futtató privát kulcsfájlját a végén törli.
@@ -64,8 +66,8 @@ Az általános Android CI aláírókulcs nélkül is ellenőrzi a debug buildet,
 Az ellenőrzött, aláírt csomag saját gépről is publikálható:
 
 ```bash
-gh release create v1.0.0 dist/grafit-1.0.0.apk dist/SHA256SUMS.txt dist/release-manifest.json \
-  --repo VKornel1031/Grafit- --verify-tag --title 'Grafit 1.0.0' --notes-file releases/1.0.0.md
+gh release create v1.0.1 dist/grafit-1.0.1.apk dist/SHA256SUMS.txt dist/release-manifest.json \
+  --repo VKornel1031/Grafit- --verify-tag --title 'Grafit 1.0.1' --notes-file releases/1.0.1.md
 ```
 
 ## Következő verzió

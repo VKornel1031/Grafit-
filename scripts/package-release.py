@@ -30,6 +30,11 @@ if not signer or signer.group(1).lower() != expected:
 badging = subprocess.check_output([str(build_tools / 'aapt'), 'dump', 'badging', str(apk)], text=True)
 if 'application-debuggable' in badging or "name='hu.grafit'" not in badging:
     raise SystemExit('The production APK must use hu.grafit and must not be debuggable.')
+permissions = subprocess.check_output([str(build_tools / 'aapt'), 'dump', 'permissions', str(apk)], text=True)
+requested = set(re.findall(r"uses-permission: name='([^']+)'", permissions))
+allowed = {'android.permission.INTERNET', 'hu.grafit.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'}
+if not requested <= allowed:
+    raise SystemExit('The release requests permissions outside its minimal permission policy: ' + ', '.join(sorted(requested - allowed)))
 subprocess.run([str(build_tools / 'zipalign'), '-c', '4', str(apk)], check=True, stdout=subprocess.DEVNULL)
 mapping = root / 'app/build/outputs/mapping/release/mapping.txt'
 if not mapping.is_file() or mapping.stat().st_size == 0:
@@ -64,6 +69,6 @@ manifest = {'version': version, 'versionCode': element['versionCode'], 'package'
     'commit': subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip(),
     'apk': target.name, 'size': target.stat().st_size, 'sha256': digest,
     'signingCertificateSha256': expected, 'minSdk': 26, 'targetSdk': 35,
-    'debuggable': False, 'minified': True, 'resourcesShrunk': True}
+    'debuggable': False, 'minified': True, 'resourcesShrunk': True, 'requestedPermissions': sorted(requested)}
 (output / 'release-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 print(f'Verified signed production APK: {target} ({target.stat().st_size:,} bytes)')

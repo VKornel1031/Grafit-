@@ -18,7 +18,7 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **Grafit 1.0.0** az alkalmazás első stabil Android-verziója. Az éles build R8-kódoptimalizálást, erőforrás-csökkentést és saját, állandó kiadási aláírókulcsot használ. Az optimalizált APK mérete körülbelül **2,1 MiB**. A kiadás előkészítését és az ellenőrzött GitHub-publikálást a [kiadási útmutató](docs/RELEASING.md) írja le.
+A **Grafit 1.0.1** csökkentett jogosultságú Android-kiadás. A GitHub-frissítések letöltési oldalát a böngészőben nyitja meg; az alkalmazás nem kér APK-telepítési engedélyt és nem kezel telepítőcsomagokat. Az éles APK R8-optimalizált és ugyanazzal az állandó kiadási kulccsal aláírt. A Google Play Protect minősítését a Google határozza meg; a kódmódosítás nem jelent jóváhagyott Google-felülvizsgálatot.
 
 ## Funkciók
 
@@ -31,7 +31,7 @@ A **Grafit 1.0.0** az alkalmazás első stabil Android-verziója. Az éles build
 | **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
 | **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
 | **Megjelenés** | Teljes alkalmazástéma, CSS-változók, saját színek és jegyszínek, betűméret, betűcsalád, kapszula eszköztárak és kártyastílusok |
-| **Frissítések** | Stabil GitHub-kiadások ellenőrzése, APK-letöltés folyamatjelzővel, ellenőrzés és Android-telepítés |
+| **Frissítések** | Stabil GitHub-kiadások ellenőrzése és a hivatalos letöltési oldal megnyitása a böngészőben |
 | **Mozgás** | Lapozható fülek, Firka-alapú oldal- és órarendátmenetek, jegyfelfedés, animált kapcsolók és 60 / 120 Hz-es beállítás |
 | **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
 
@@ -152,9 +152,13 @@ A 120 Hz-es módhoz megfelelő kijelző szükséges. Ha az eszköz aktuális kij
 
 ## Alkalmazásfrissítés GitHubról
 
-Indításkor a Grafit egyszer lekéri a tároló legújabb stabil GitHub-kiadását. Újabb, APK-t tartalmazó kiadásnál felugró ablakban megjelenik a verzió és a kiadási jegyzet. A **Letöltés és frissítés** gomb letölti és ellenőrzi az APK-t, majd megnyitja az Android telepítőjét. A folyamat megszakítható és újrapróbálható. Kézi keresés a **Beállítások → Alkalmazásfrissítések** részen indítható.
+Indításkor a Grafit egyszer lekéri a tároló legújabb stabil GitHub-kiadásának adatait. Újabb, APK-t tartalmazó kiadásnál felugró ablakban megjelenik a verzió és a kiadási jegyzet. A **GitHub letöltési oldal** gomb a hivatalos GitHub Release oldalt nyitja meg a böngészőben. Az APK letöltését a böngésző, telepítését az Android kezeli. A Grafit nem kér alkalmazástelepítési engedélyt és nem tölt le APK-t a saját tárhelyére. Kézi keresés a **Beállítások → Alkalmazásfrissítések** részen indítható.
 
-Első alkalommal az Android kérheti a **Grafit → Ismeretlen alkalmazások telepítése** engedélyt. A telepítés a rendszer saját megerősítésével történik. Az alkalmazás ellenőrzi a fájlméretet, a GitHub által megadott SHA-256 összeget, ha rendelkezésre áll, a csomagazonosítót, a magasabb verziókódot és az azonos aláírókulcsot. A félbeszakadt vagy ellenőrzésen elbukott fájl nem kerül a telepítőhöz.
+A szükséges alkalmazásjogosultság az internetelérés, valamint az AndroidX belső, signature-szintű fogadóvédelme. A kiadási script a kész APK jogosultságlistáját ellenőrzi. Az Android telepítője az alkalmazás frissítésekor ellenőrzi az aláírás kompatibilitását.
+
+### Play Protect-jelzés
+
+Az 1.0.0 telepítésénél felhasználói visszajelzés szerint „Harmful App Blocked” üzenet jelent meg. Az 1.0.1 eltávolítja a saját APK-letöltő és -telepítő funkciót és annak engedélyét; ez csökkenti az alkalmazás képességeit, de a Google minősítésének okát nem igazolja, és nem garantálja a tiltás megszűnését. Ha a jelzés fennmarad, a készítő a [Google Play Protect felülvizsgálati űrlapján](https://support.google.com/googleplay/android-developer/contact/protectappeals) kérhet ellenőrzést. A [felülvizsgálati útmutató](docs/PLAY_PROTECT_REVIEW.md) felsorolja a szükséges adatokat. A Play Protect maradjon bekapcsolva.
 
 ### Kiadás előkészítése
 
@@ -172,18 +176,18 @@ Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmaz
 
 Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.0.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.0.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK, optimalizált éles APK és AAB fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
 | Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és R8 utáni indulási konstruktor ellenőrizve |
-| JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési tesztekkel |
+| JVM-tesztek | 65 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.0 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.1 éles eszközös ellenőrzése még szükséges |
 
-A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a teljes és hiányos letöltést, az ellenőrzőösszeget és a telepítési szabályokat. Az Android telepítőjének és a telepítési engedélynek a tényleges működését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
+A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 
 A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
 

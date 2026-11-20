@@ -624,11 +624,11 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         item {
             Section("Alkalmazásfrissítések")
             Text("Telepített változat: ${vm.updates.version}")
-            OutlinedButton(onClick = { vm.updates.check(manual = true) }, enabled = !vm.updates.checking && !vm.updates.downloading) {
+            OutlinedButton(onClick = { vm.updates.check(manual = true) }, enabled = !vm.updates.checking) {
                 Text(if (vm.updates.checking) "Ellenőrzés…" else "GitHub-frissítés keresése")
             }
             vm.updates.message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text("Indításkor egyszer ellenőrizzük a stabil GitHub-kiadásokat. A telepítéshez az Android megerősítése szükséges.", style = MaterialTheme.typography.bodySmall)
+            Text("Indításkor egyszer ellenőrizzük a stabil GitHub-kiadásokat. A letöltési oldalt a böngésződ nyitja meg.", style = MaterialTheme.typography.bodySmall)
         }
         item {
             HorizontalDivider()

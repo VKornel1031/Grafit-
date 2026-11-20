@@ -148,7 +148,7 @@ Az eszköztesztek fordítása és futtatása külön is indítható.
 
 A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, a teljes tanévi szinkront, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
 
-A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t. Külön, hardveresen gyorsított Android-emulátoros feladat futtatja a natív bejelentkezési böngésző regressziós tesztjeit és menti a teszteredményeket.
+A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t. A natív böngésző eszköztesztjei külön, csatlakoztatott Android-eszközön indíthatók.
 
 A projekt előkészített felhőkörnyezetében a parancsok előtt futtasd a `source scripts/cloud-env.sh` utasítást. A környezet eszközeinek újratelepítését és ellenőrzését a `bash scripts/cloud-setup.sh` végzi.
 

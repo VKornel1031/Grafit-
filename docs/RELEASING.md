@@ -2,6 +2,8 @@
 
 A Grafit első éles verziója **1.0.0**, `versionCode = 9`, címkéje `v1.0.0`. A csomagazonosító `hu.grafit`, a minimális Android-verzió 8.0 (API 26).
 
+A Git-címke és a forrás közzététele nem hoz létre automatikusan letölthető APK-mellékletet. A telepítők a lent leírt, kézzel indított **Signed release** munkafolyamattal vagy ellenőrzött kézi közzététellel jelennek meg.
+
 ## Állandó kiadási kulcs
 
 A privát kulcs a forráskódon kívül készült. A kiadási csomagok és a nyilvános tanúsítvány megoszthatók; a privát kulcs és jelszava bizalmas.
@@ -76,10 +78,16 @@ Növeld a `versionName` és `versionCode` értékét, adj hozzá `releases/<verz
 
 ## Telepítési ellenőrzés
 
-Az 1.0.0 az új éles kulcs miatt a korábbi debug APK helyett egyszeri újratelepítést igényel. Ez a helyi profil és beállítások elvesztésével jár; az iskolai adatok új bejelentkezéssel visszaszinkronizálhatók. Azonos éles kulccsal aláírt későbbi verziók megőrzik az alkalmazás adatait.
+Eltérő debug aláírású változat általában nem frissíthető közvetlenül az éles APK-val. Az eredeti fejlesztői kulcshoz Android 9-től hitelesített kulcsátmenet áll rendelkezésre; lásd a következő szakaszt. Más aláírásnál az eltávolítás adatvesztéssel járhat. Azonos éles kulccsal aláírt későbbi verziók megőrzik az alkalmazás adatait.
 
 Az eszköztesztek fordítása és a statikus APK-ellenőrzés nem helyettesíti a telefonos ellenőrzést: telepítés, bejelentkezés, szinkron, profil, témák és az Android frissítési megerősítése. A felhasználó kérésére a felhős ellenőrzés nem indít emulátort.
 
 ## Aláírási ütközés a fejlesztői változattal
 
 Az eredeti debug kiadás Android 9+ rendszereken hitelesített kulcsátmenettel is frissíthető. Részletek és külön buildscript: [SIGNING_MIGRATION.md](SIGNING_MIGRATION.md). Ez megőrizheti a telefonon még meglévő adatokat, és az alkalmazás éles aláírókulcsát használja.
+
+## Nyilvános repository
+
+A forrás és a dokumentáció megosztható a meglévő licenc alatt. A privát aláírókulcs, a jelszófájl és a helyi környezeti fájl ne kerüljön Gitbe vagy kiadási mellékletbe. A nyilvános tanúsítvány, ujjlenyomat és lineage fájl ellenőrzési adat, nem titok.
+
+A repository láthatósága a GitHub **Settings → General → Danger Zone → Change repository visibility** felületén módosítható. A beállítás megváltoztatása külön tulajdonosi művelet. Publikáláskor ellenőrizd az Issues elérhetőségét, és igény szerint engedélyezd a privát sérülékenység-bejelentést a **Settings → Code security** oldalon. A README letöltési hivatkozásához külön, aláírt APK-t tartalmazó Release szükséges.

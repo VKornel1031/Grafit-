@@ -1,0 +1,40 @@
+name: Hibajelentés
+description: Hibás működés jelzése személyes adatok nélkül.
+title: "[Hiba]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ne adj meg jelszót, tokent, tanulói azonosítót vagy teljes hibajelentést. A képekről és naplókból töröld a személyes adatokat. Biztonsági hibához a SECURITY.md útmutatását kövesd.
+  - type: input
+    id: app_version
+    attributes:
+      label: Grafit-verzió
+      placeholder: Például 1.1.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Készülék és Android-verzió
+      placeholder: Gyártó, típus, Android-verzió; béta rendszer esetén ezt is jelezd.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Hogyan idézhető elő?
+      description: Melyik képernyőn, milyen lépések után jelentkezik?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Elvárt és tényleges működés
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Képernyőkép vagy rövid naplórészlet
+      description: Opcionális. Csak személyes és bejelentkezési adatok nélkül.

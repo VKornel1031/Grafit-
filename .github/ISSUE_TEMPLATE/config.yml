@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Használati útmutató
+    url: https://github.com/VKornel1031/Grafit-/blob/main/docs/USAGE.md
+    about: Beállítások, szinkronizálás és gyakori kérdések.
+  - name: Biztonsági hibák
+    url: https://github.com/VKornel1031/Grafit-/blob/main/SECURITY.md
+    about: Érzékeny részleteket ne nyilvános hibajegyben küldj.

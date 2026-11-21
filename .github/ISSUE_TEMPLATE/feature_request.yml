@@ -1,0 +1,21 @@
+name: Ötlet vagy fejlesztési kérés
+description: Új funkció vagy felületi változtatás javaslata.
+title: "[Ötlet]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Milyen problémát oldana meg?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Javasolt működés
+      description: Írd le egy konkrét használati példával.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Más megoldások vagy további részletek

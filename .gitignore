@@ -10,3 +10,21 @@ local.properties
 .signing/
 dist/
 .idea/
+
+# Local credentials and signing backups
+.env
+.env.*
+!.env.example
+*.key
+keystore-password.txt
+release-env.sh
+
+# Distribution artifacts and device diagnostics
+*.apk
+*.aab
+*.apks
+*.idsig
+*.hprof
+*.log
+bugreport*
+dumpstate*

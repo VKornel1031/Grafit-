@@ -32,7 +32,16 @@ if 'application-debuggable' in badging or "name='hu.grafit'" not in badging:
     raise SystemExit('The production APK must use hu.grafit and must not be debuggable.')
 permissions = subprocess.check_output([str(build_tools / 'aapt'), 'dump', 'permissions', str(apk)], text=True)
 requested = set(re.findall(r"uses-permission: name='([^']+)'", permissions))
-allowed = {'android.permission.INTERNET', 'hu.grafit.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'}
+# Keep this explicit: notification/background permissions are part of the app,
+# while installer, exact-alarm, location, camera, and microphone access are not.
+allowed = {
+    'android.permission.INTERNET',
+    'android.permission.POST_NOTIFICATIONS',
+    'android.permission.ACCESS_NETWORK_STATE',
+    'android.permission.RECEIVE_BOOT_COMPLETED',
+    'android.permission.POST_PROMOTED_NOTIFICATIONS',
+    'hu.grafit.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION',
+}
 if not requested <= allowed:
     raise SystemExit('The release requests permissions outside its minimal permission policy: ' + ', '.join(sorted(requested - allowed)))
 subprocess.run([str(build_tools / 'zipalign'), '-c', '4', str(apk)], check=True, stdout=subprocess.DEVNULL)

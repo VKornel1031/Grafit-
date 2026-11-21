@@ -1,257 +1,99 @@
 <div align="center">
 
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_grafit.png" alt="Grafit alkalmazásikon" width="96" height="96">
+
 # Grafit
 
-**Natív Android KRÉTA-kliens, személyre szabható Material 3 felülettel.**
+**Az iskolád. A te stílusod.**
 
-Órarend, jegyek, hiányzások és iskolai teendők egy helyen.
+Magyar nyelvű, natív Android KRÉTA-kliens, személyre szabható Material 3 felülettel.
 
-[![Android build](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml/badge.svg)](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml)
+[![Android](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml/badge.svg)](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml)
+[![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
+[![Licenc: CC BY-NC-SA 4.0](https://img.shields.io/badge/Licenc-CC_BY--NC--SA_4.0-lightgrey)](LICENSE.txt)
 
-[Letöltés](https://github.com/VKornel1031/Grafit-/releases) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Licenc](LICENSE.txt)
+[Letöltés](https://github.com/VKornel1031/Grafit-/releases) · [Használati útmutató](docs/USAGE.md) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Közreműködés](CONTRIBUTING.md)
 
 </div>
 
----
+## Mi az a Grafit?
 
-## A Grafitról
+A Grafit az órarendedet, jegyeidet, hiányzásaidat és iskolai teendőidet hozza egy közös, testre szabható felületre. Kotlin és Jetpack Compose alapokon készül. A KRÉTA-integráció, a navigáció és a mozgások a [Firka](https://github.com/QwIT-Development/firka) munkájára épülnek, natív Android-adaptációval.
 
-A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
-
-A **Grafit 1.1.0** kapcsolható, személyre szabható értesítéseket ad az új jegyekről, házi feladatokról és bejelentett dolgozatokról, a háttérben is. Az élő tanórai értesítés alapból monokróm, és az óra végéig számol vissza. Az órarend nyilai között a kiválasztott dátum jelenik meg; „Ma” csak a mai nap kiválasztásakor látható. A folyamatjelző továbbra sem tolja el a tartalmat. Az optimalizált APK megtartja az állandó éles kulcsot és a működő aláírási történetet, így a meglévő alkalmazás adatai frissítéskor megmaradnak.
+A Grafit **független alkalmazás**, nem a KRÉTA hivatalos kliense, és nem áll kapcsolatban a KRÉTA üzemeltetőjével.
 
 ## Funkciók
 
-| Terület | Lehetőségek |
+| Terület | Mit kínál? |
 | --- | --- |
-| **Kezdőlap** | Mai következő tanóra, óravégi és szabadnapi állapot, választható kezdőlapi elemek |
-| **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése, helyes dátumfelirat |
-| **Értesítések** | Kapcsolható háttérellenőrzés, kategóriák és saját üzenetsablonok, állítható gyengébbjegy-határ |
-| **Élő tanóra** | Monokróm visszaszámlálás, saját szöveg és szín, választható élő állapotsávjelzés Android 16-tól |
-| **Jegyek** | Tantárgyi átlagok, lenyitható értékelések, éves átlag és technikumi ösztöndíjbecslés |
-| **Hiányzások** | Igazolt és igazolatlan mulasztások, igazolásra váró tételek és késések |
-| **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
-| **Profil** | Egyéni megjelenített név, választható profilkép és animált profilmenü |
-| **Megjelenés** | Teljes alkalmazástéma, CSS-változók, saját színek és jegyszínek, betűméret, betűcsalád, kapszula eszköztárak és kártyastílusok |
-| **Frissítések** | Stabil GitHub-kiadások ellenőrzése és a hivatalos letöltési oldal megnyitása a böngészőben |
-| **Mozgás** | Lapozható fülek, Firka-alapú oldal- és órarendátmenetek, jegyfelfedés, animált kapcsolók és 60 / 120 Hz-es beállítás |
-| **Bemutató mód** | A felület kipróbálása kitalált adatokkal, saját KRÉTA-fiók nélkül |
+| Kezdőlap | Következő tanóra, napi órarend, legutóbbi jegyek és hírek; jelzés, ha nincs tanítás vagy véget ért a nap |
+| Órarend | Heti és napi navigáció, tanterem, tanár és tananyag; a további hetek betöltése igény szerint |
+| Jegyek | Tantárgyi és éves átlag, részletes értékelések, technikumi ösztöndíjbecslés |
+| Hiányzások | Igazolt, igazolatlan és igazolásra váró mulasztások, késések |
+| Teendők | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
+| Értesítések | Választható háttérellenőrzés, saját üzenetsablonok és állítható gyengébbjegy-határ |
+| Élő tanóra | Alapból monokróm visszaszámlálás a tanóra végéig; testre szabható szöveg és megjelenés |
+| Személyre szabás | Material You, saját paletta és jegyszínek, CSS-témaváltozók, kapszula eszköztárak, kártyák és betűk |
+| Helyi profil | Saját megjelenített név és profilkép, fiókonként elkülönítve |
+| Mozgás | Animált navigáció, órarendváltás és jegyfelfedés; választható 60 / 120 Hz a megfelelő kijelzőkön |
+| Bemutató mód | Kipróbálható felület kitalált adatokkal, KRÉTA-fiók nélkül |
 
-## Kipróbálás és telepítés
+## Telepítés
 
-**`INSTALL_FAILED_UPDATE_INCOMPATIBLE` telepítési hibánál:** az Android egy eltérő kulccsal aláírt korábbi Grafit-csomagot tart nyilván. Az eredeti felhős debug változathoz Android 9-től hitelesített [aláírási kulcsátmeneti APK](docs/SIGNING_MIGRATION.md) készíthető, alkalmazásfunkciók módosítása nélkül.
+A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.1.1**; változásai a [kiadási jegyzetben](releases/1.1.1.md) olvashatók.
 
-A stabil kiadások a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon érhetők el a publikálást követően. Az 1.0.0 kiadási jegyzete: [releases/1.0.0.md](releases/1.0.0.md). A korábbi debug változatról az új éles kulcs miatt egyszeri újratelepítés szükséges, amely törli a helyi profilt és beállításokat. A későbbi éles frissítések megőrzik ezeket.
+1. Válassz egy közzétett kiadást, és töltsd le az APK-mellékletét.
+2. Nyisd meg a fájlt a telefonodon. Szükség esetén engedélyezd a telepítést a használt böngésző vagy fájlkezelő számára.
+3. Jelentkezz be a KRÉTA saját oldalán, vagy válaszd a bemutató módot.
 
-**Android 8.0 vagy újabb rendszer szükséges.** A Material You háttérképhez igazodó színei Android 12-től érhetők el.
+Az általános kiadáshoz **Android 8.0+** szükséges. A korai fejlesztői változathoz készült, `key-migration` nevű csomagok **Android 9.0+** rendszert igényelnek. A Material You dinamikus színei Android 12-től, a kiemelt élő állapotsávjelzés az azt támogató Android 16+ rendszereken érhetők el.
 
-1. Nyisd meg az [Android munkafolyamatot](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml).
-2. Válaszd ki a `main` ág legutóbbi sikeres futását.
-3. Töltsd le a **grafit-debug-apk** nevű csomagot az *Artifacts* részből, majd bontsd ki.
-4. Telepítsd az `app-debug.apk` fájlt a telefonodra. Az Android kérheti az adott telepítési forrás engedélyezését.
+A hivatalos, azonos aláírással készült kiadásokat a meglévő alkalmazásra telepítsd az adatok megtartásához. Eltérő fejlesztői aláírásnál olvasd el az [aláírási útmutatót](docs/SIGNING_MIGRATION.md). A GitHub Actions debug csomagjai fejlesztői tesztelésre valók, és nem helyettesítik az aláírt kiadásokat.
 
-Az első indításkor választhatsz a KRÉTA-fiókos bejelentkezés és a mintaadatokkal működő bemutató között. A bejelentkezési oldalon a KRÉTA saját felületén adhatod meg az intézményedet és a fiókadataidat.
+## Szinkronizálás és értesítések
 
-A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkezés és az intézményenként eltérő válaszok ellenőrzéséhez saját, jogosultan használt fiók szükséges.
+A teljes szinkron indításkor, bejelentkezés után és kézi frissítéskor fut. A további órarendi hetek megnyitáskor töltődnek le, ha még nincsenek helyben mentve. Sikertelen kérés esetén a korábbi adatok megmaradnak.
 
-## Bejelentkezés és szinkronizálás
+Az értesítéseket a **Beállítások → Értesítések** menüben kapcsolhatod be. Külön választható az új jegy, a gyengébb jegy, a házi feladat és a bejelentett dolgozat; a címük és szövegük is módosítható. A háttérellenőrzést az Android körülbelül 15 percenként ütemezi: ez nem a hivatalos KRÉTA push szolgáltatása, és az energiatakarékosság késleltetheti.
 
-A bejelentkezés a KRÉTA saját oldalán, külön natív Android WebView-képernyőn történik. Az oldal a betöltés közben is látható és használható. A képernyő tetején vékony folyamatjelző, visszalépési és újratöltési gomb segíti a navigációt. Lassú betöltés, hálózati hiba vagy hiányzó Android WebView esetén az alkalmazás hibaüzenetet jelenít meg. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
+Az élő tanórai értesítés a helyi órarend alapján számol vissza. A számlálót az Android frissíti; a kiemelt állapotsávjelzés elérhetőségét és megjelenését a rendszer szabályozza. [Részletek és korlátok](docs/NOTIFICATIONS.md).
 
-A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Teljes automatikus szinkron az alkalmazás indításakor és sikeres bejelentkezés után fut. Bekapcsolt értesítéseknél ezen felül az Android körülbelül 15 percenként ellenőrzi a jegyeket, házi feladatokat és bejelentett dolgozatokat; ez nem tölti le az órarendet. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a fő navigációs lapok közötti váltás nem indít új szinkront. Korábban le nem töltött órarendi hét megnyitásakor csak az adott hét lekérése történik meg.
+## Adatvédelem
 
-- A tanulói adatlap és az osztályok, csoportok betöltése után frissülnek a jegyek, házi feladatok, dolgozatok és üzenetek.
-- Az indítási szinkron az aktuális és következő hét órarendjét kéri le. Más hetek igény szerint töltődnek le; a sikeresen letöltött, tanóra nélküli hetek is helyben megmaradnak. A teljes tanév egyszerre történő letöltése nem terheli a szolgáltatást.
-- A kézi frissítés az aktuális hetet, a kiválasztott órarendi időszakot és a kezdőlapon megjelenő adatokat is frissíti. Az újrapróbálás sem indít teljes tanéves letöltést. A kliens legfeljebb három párhuzamos adatlekérést indít, és figyelembe veszi a szerver által kért újrapróbálási várakozást.
-- Az órarendi napválasztás csak a helyben tárolt adatok között navigál; új adatok lekéréséhez használd a Frissítés gombot.
-- A faliújság és a tanári feljegyzések frissítéskor, azonosító alapján egyesítve kerülnek a helyi tárba.
-- A hiányzások az órarend után frissülnek. A digitális tantárgyak az indítási és kézi szinkron részeként töltődnek le. A kliens az osztálycsoportok átlagainak lekérdezését is tartalmazza.
-- A sikeres részfrissítések folyamatosan mentődnek. Hiba esetén az érintett rész korábbi adatai megmaradnak, és az alkalmazás jelzi a sikertelen frissítéseket.
+A Grafit közvetlenül a KRÉTA szolgáltatásaival kommunikál. Nincs saját fiókrendszere vagy iskolai adatokat gyűjtő Grafit-szervere. A bejelentkezési tokenek, az iskolai gyorsítótár és a helyi profil Android Keystore-kulccsal titkosítva tárolódnak; az automatikus felhőmentés ki van kapcsolva. A megjelenési és értesítési beállítások az alkalmazás saját helyi tárában maradnak.
 
-A tokenmegújítás párhuzamos kérések esetén is sorba rendezett. Az átmeneti tokenmegújítási hibák utáni várakozás a Firka 1, 3 és 5 másodperces ütemezését követi.
+A frissítéskereső a GitHub nyilvános kiadási adatait kéri le. Az alkalmazás nem tartalmaz analitikai vagy reklám-SDK-t. [Adatkezelési tájékoztató](PRIVACY.md).
 
-### Firka-alapú animációk
+## Fejlesztés
 
-A natív felület a Firka mozgásainak időzítését és görbéit alkalmazza.
-
-| Művelet | Átmenet |
-| --- | --- |
-| Alsó fülek közötti váltás | 175 ms-os lapozás, vízszintes ujjmozdulattal is |
-| Oldalak megnyitása és bezárása | 300 / 250 ms-os áttűnés és finom függőleges elmozdulás |
-| Kezdőlapi adatok megjelenése | 300 ms-os beúszás és áttűnés, meleg gyorsítótár esetén azonnali megjelenítés |
-| Órarendi napváltás | Irányhelyes, 300 ms-os vízszintes átmenet |
-| Elrejtett jegy felfedése | 400 ms-os átfordulás |
-| Beállítási kapcsolók | 150 ms-os szín- és pozícióváltás |
-
-## Tantárgyi átlagok és ösztöndíj
-
-A **Jegyek** oldalon minden elérhető tantárgy mellett a súlyozott évközi átlaga látható. A több forrásból érkező azonos tantárgyak egyetlen sorban szerepelnek; a különböző névváltozatokhoz tartozó jegyek közös átlagba számítanak. A tantárgy megérintésével megnyithatók az egyes értékelések. A jegy nélküli tantárgyak átlaga „—”. Az oldal alján egymás mellett jelenik meg az **Éves átlag** és a **Meghatározott ösztöndíj átlag alapján** kártya. A jegyek elrejtése ezekre az összesítésekre is vonatkozik.
-
-Az éves átlag az értékeléssel rendelkező tantárgyak súlyozott átlagainak számtani átlaga: minden tantárgy azonos súllyal számít. Ez évközi tájékoztatás, nem a bizonyítvány hivatalos átlaga.
-
-A technikumi szakirányú oktatásra megjelenített havi becslés sávjai:
-
-| Két tizedesre kerekített átlag | Havi becsült összeg |
-| --- | --- |
-| 2,00–2,99 | 8 000 Ft |
-| 3,00–3,99 | 25 000 Ft |
-| 4,00–4,49 | 42 000 Ft |
-| 4,50–5,00 | 59 000 Ft |
-
-A becslés a jelenlegi átlagot használja. A hivatalos ösztöndíj az előző tanév év végi osztályzataitól és a jogosultsági feltételektől függ. Technikumi ágazati alapoktatásban jogosultság esetén havi 8 000 Ft jár, az átlagtól függetlenül. Hiányzó vagy 2,00 alatti átlagnál az alkalmazás nem ad becslést. Forrás: [SZFSZC – Ösztöndíjak](https://szfszc.hu/kepzesek/osztondijak).
-
-## Saját profil és beállítások
-
-Érintsd meg a **jobb felső sarokban lévő profilbuborékot**. A felcsúszó menüben szerkesztheted a megjelenített nevedet, választhatsz vagy eltávolíthatsz profilképet, megnyithatod a beállításokat, illetve kijelentkezhetsz.
-
-- A név a **Név mentése** gombbal menthető. A név és a profilkép mentése a KRÉTA-szinkrontól függetlenül, helyben történik; hálózati frissítés közben is használható.
-- A kiválasztott kép középre vágott, legfeljebb 512 × 512 képpontos másolata helyben tárolódik.
-- Az egyéni profil minden KRÉTA-fiókhoz külön tartozik. A bemutató mód saját profilt használ.
-- A név, a profilkép és a megjelenési beállítások megmaradnak az alkalmazás újraindítása után.
-- Kijelentkezéskor a munkamenet és az iskolai gyorsítótár törlődik. A helyi profil ugyanazzal a fiókkal történő következő bejelentkezéskor újra betöltődik.
-
-A beállításokban módosíthatod a témát, a kiemelőszínt, a kártyák lekerekítését és sűrűségét, a jegyek láthatóságát, valamint az alsó navigáció elemeit. Az alkalmazás adatainak törlése vagy eltávolítása a helyben mentett személyre szabást is törli.
-
-### Az egész alkalmazás személyre szabása
-
-A **Beállítások** menüben minden változtatás azonnal megjelenik és helyben mentődik. A korábbi megjelenési beállításokat a frissítés automatikusan átveszi.
-
-- Kapszula alakú felső eszköztár és lebegő alsó navigáció; az alsó feliratok állandó vagy csak kijelöléskori megjelenítése.
-- Kitöltött, körvonalas vagy árnyékos kártyák, 0–40 egység közötti lekerekítéssel.
-- 85–130%-os alkalmazásbeli betűméret, letisztult, talpas vagy monospace betűcsalád. A rendszer betűméret-beállítása továbbra is érvényes.
-- Hét kiemelőpaletta, külön felületi és háttérszínek, egyenként állítható 1–5-ös jegyszínek és tiszta fekete sötét háttér.
-- Választható kezdőlapi összesítők, legutóbbi jegyek, hírek és napi órarend; kapcsolható lapváltási rezgés.
-
-Az **Egyéni CSS-téma szerkesztése** a Grafit saját CSS-változóit fordítja natív Compose-témává. Egyetlen `:root` blokk használható, `--grafit-` előtagú változókkal. A támogatott színek `#RGB` vagy `#RRGGBB` alakúak. A `radius` értékében a `px` natív, sűrűségfüggetlen felületi egységet jelent. A szerkesztő a hibás vagy nem támogatott értékeket mentés előtt jelzi. A saját színek a paletta és a Material You színeit felülírják; webes szelektorok és külső stíluslapok nem részei ennek a natív témanyelvnek.
-
-```css
-:root {
-  --grafit-primary: #6986A8;
-  --grafit-background: #17191C;
-  --grafit-surface: #1D2024;
-  --grafit-card: #25292E;
-  --grafit-on-surface: #F1F3F5;
-  --grafit-on-surface-variant: #BCC4CE;
-  --grafit-grade-1: #F58B88;
-  --grafit-grade-5: #9FD29A;
-  --grafit-radius: 28px;
-  --grafit-font-scale: 1.05;
-  --grafit-toolbar: pill;
-  --grafit-navigation: pill;
-  --grafit-card-style: outlined;
-}
-```
-
-A `font-family` értékei `sans`, `serif`, `mono`; a `toolbar` és `navigation` értékei `standard`, `pill`; a `card-style` értékei `filled`, `outlined`, `elevated`. A teljes színváltozó-lista az alkalmazás szerkesztőjében és a [ThemeCss.kt](app/src/main/java/hu/grafit/ui/ThemeCss.kt) fájlban olvasható. Az elrejtett jegyek saját színe is rejtve marad a felfedésig.
-
-### Mai órák állapota
-
-A kezdőlap csak az adott budapesti naptári nap tényleges, el nem maradt tanórái közül választ. Az utolsó óra után **Mára nincs több órád.**, tanóra nélküli napon **Ma nincsenek óráid.** jelenik meg. A következő napi órák nem fedik el ezeket az állapotokat. A jelzés a helyben tárolt órarendre támaszkodik, és a helyi óra frissítése nem indít KRÉTA-szinkront.
-
-### 60 vagy 120 Hz
-
-A **Beállítások → Mozgás és képfrissítés** részen választható ki a kívánt frissítési mód. A választás helyben mentődik.
-
-A 120 Hz-es módhoz megfelelő kijelző szükséges. Ha az eszköz aktuális kijelzőmódjai között elérhető a 120 Hz, a Grafit ezt kéri az Androidtól. Egyébként 60 Hz-et kér, és jelzi a korlátozást. A tényleges képfrissítést a rendszer, az energiatakarékosság és a gyártói beállítások is befolyásolhatják.
-
-## Alkalmazásfrissítés GitHubról
-
-Indításkor a Grafit egyszer lekéri a tároló legújabb stabil GitHub-kiadásának adatait. Újabb, APK-t tartalmazó kiadásnál felugró ablakban megjelenik a verzió és a kiadási jegyzet. A **GitHub letöltési oldal** gomb a hivatalos GitHub Release oldalt nyitja meg a böngészőben. Az APK letöltését a böngésző, telepítését az Android kezeli. A Grafit nem kér alkalmazástelepítési engedélyt és nem tölt le APK-t a saját tárhelyére. Kézi keresés a **Beállítások → Alkalmazásfrissítések** részen indítható.
-
-A szükséges alkalmazásjogosultság az internetelérés, valamint az AndroidX belső, signature-szintű fogadóvédelme. A kiadási script a kész APK jogosultságlistáját ellenőrzi. Az Android telepítője az alkalmazás frissítésekor ellenőrzi az aláírás kompatibilitását.
-
-### Play Protect-jelzés
-
-Az 1.0.0 telepítésénél felhasználói visszajelzés szerint „Harmful App Blocked” üzenet jelent meg. Az 1.0.1 eltávolítja a saját APK-letöltő és -telepítő funkciót és annak engedélyét; ez csökkenti az alkalmazás képességeit, de a Google minősítésének okát nem igazolja, és nem garantálja a tiltás megszűnését. Ha a jelzés fennmarad, a készítő a [Google Play Protect felülvizsgálati űrlapján](https://support.google.com/googleplay/android-developer/contact/protectappeals) kérhet ellenőrzést. A [felülvizsgálati útmutató](docs/PLAY_PROTECT_REVIEW.md) felsorolja a szükséges adatokat. A Play Protect maradjon bekapcsolva.
-
-### Kiadás előkészítése
-
-A frissítési csatornához nyilvános, stabil GitHub Release szükséges a `VKornel1031/Grafit-` tárolóban, például `v0.5.1` címkével. Csatolj hozzá egy legfeljebb 200 MiB méretű, aláírt APK-t, például `grafit-0.5.1.apk` néven. Minden kiadásban növeld a `versionCode` értékét. Az APK-t ugyanazzal a tartós kiadási kulccsal írd alá, mint a felhasználóknál telepített változatot. A GitHub Actions letölthető build-eredményei külön csatornát jelentenek; a frissítéskereső a Releases oldal APK-mellékleteit használja.
-
-A projekt a privát kiadási kulcsot nem tárolja a forráskódban. Az 1.0.0-hoz saját, állandó kiadási kulcs készült; az éles csomag ellenőrzése a tárolóban szereplő nyilvános tanúsítványhoz történik. A Signed release workflow és a helyi kiadási script csak a megfelelő kulccsal aláírt APK-t készíti elő publikálásra. A teljes folyamat: [Kiadás és aláírás](docs/RELEASING.md).
-
-## Helyi adattárolás
-
-A bejelentkezés OAuth-kódcserét, S256 PKCE-t és a visszatérési munkamenet ellenőrzését használja. A tokenek, az iskolai gyorsítótár és a személyes profil Android Keystore-kulccsal titkosítva, az alkalmazás saját tárhelyén tárolódnak. A megjelenési beállítások szintén helyben mentődnek. Az automatikus felhőmentés és az eszközök közötti adatátvitel ki van kapcsolva.
-
-Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmazás közvetlenül a KRÉTA szolgáltatásaival kommunikál. Hálózati hiba esetén az utoljára sikeresen letöltött iskolai adatok és a frissítés időpontja segítik a tájékozódást.
-
-## Értesítések és élő visszaszámlálás
-
-A **Beállítások → Értesítések** szakaszban engedélyezheted az iskolai értesítéseket. Android 13-tól a rendszer engedélye is szükséges. Külön kapcsolható az új jegy, a gyengébb jegy, a házi feladat és a bejelentett dolgozat. Minden típushoz saját címet és üzenetet adhatsz, például `{tantargy}: {jegy}`. A gyengébb jegy határa 1–4 között állítható. Az első lekérés nem küld értesítést a régi adatokból, és ugyanaz a rekord később sem ismétlődik.
-
-A háttérben körülbelül 15 percenkénti ellenőrzést az Android ütemezi. Ez nem a hivatalos KRÉTA push szolgáltatása: az energiatakarékosság és a hálózati állapot késleltetheti a kézbesítést. Kényszerített leállítás után nyisd meg újra az alkalmazást. Az üzenetek és a kapcsolók helyben megmaradnak.
-
-Az **Élő tanóra** kapcsoló az elmentett órarend alapján visszaszámlál a tanóra végéig. A kijelzés alapból monokróm; a szöveg, a szín és az előrehaladási sáv módosítható. A számlálót az Android folyamatosan frissíti, az előrehaladási sáv a legutóbbi értesítésfrissítés állapotát mutatja. Android 16-tól a rendszer kiemelt állapotsávjelzést is adhat, ha ezt engedélyezi; a pillát az Android rajzolja. Az órakezdési jelzés energiatakarékosság miatt késhet. Szünetben, ünnepnapon és elmaradt tanóránál nincs aktív visszaszámlálás.
-
-A hang, a rezgés és a zárolt képernyős megjelenés az Android értesítési beállításaiban is szabályozható. [Részletes működés és korlátok](docs/NOTIFICATIONS.md).
-
-## Fejlesztési állapot
-
-Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
-
-Az 1.1.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
-
-| Ellenőrzés | Állapot |
-| --- | --- |
-| Debug APK, optimalizált éles APK fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
-| Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és indulási konstruktor ellenőrizve |
-| JVM-tesztek | 83 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
-| Android Lint | 0 hiba, stílusjavaslatokkal |
-| Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Értesítések | JVM-szabályok és tanóra-időhatárok ellenőrizve; az Android-engedély, háttérütemezés és élő pillakijelzés fizikai eszközös ellenőrzése még szükséges |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.1.1 éles eszközös ellenőrzése még szükséges |
-
-A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
-
-A böngészőtesztek helyi HTML-űrlapon ellenőrzik a megjelenítést és a tényleges érintéses interakciót, valamint a PKCE-adatok megőrzését képernyő-újralétrehozáskor és a bejelentkezési kód visszaadását. Az éles KRÉTA oldal elérését a fejlesztői felhőkörnyezet hálózati szabályzata jelenleg korlátozza. A 120 Hz-es működés ellenőrzéséhez megfelelő fizikai kijelző szükséges.
-
-## Fejlesztőknek
-
-### Szükséges eszközök
-
-- Android Studio vagy Android SDK parancssori eszközök
-- JDK 17 vagy 21
-- Android SDK Platform 35 és Build Tools 35.0.0
-- A projektben rögzített Gradle 8.13 wrapper
-
-### Fordítás és ellenőrzés
+Szükséges: **JDK 17 vagy 21**, **Android SDK 35**, **Build Tools 35.0.0**. A Gradle wrappert a projekt tartalmazza.
 
 ```bash
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
-Az elkészült APK útvonala `app/build/outputs/apk/debug/app-debug.apk`. Ez fejlesztői kulccsal aláírt tesztváltozat. A `:app:assembleRelease` feladat az aktuális csomagolási beállításokkal release APK-t készít; a négy `GRAFIT_` aláírási változóval éles kulcsot használ, ezek nélkül aláíratlan ellenőrzési csomagot fordít. Publikáláshoz használd a `scripts/build-release.sh` scriptet és a [kiadási útmutatót](docs/RELEASING.md).
+A teszt-APK: `app/build/outputs/apk/debug/app-debug.apk`. Az éles kiadásokhoz külön, privát aláírókulcs szükséges; ez nincs a repositoryban. Saját kulccsal aláírt csomag nem telepíthető a hivatalos kiadás frissítéseként.
 
-Csatlakoztatott telefonra vagy emulátorra telepítéshez futtasd az alábbi parancsot.
+A CI fordítással, JVM-tesztekkel és linttel ellenőriz. Az eszközteszteket lefordítja; tényleges futtatásuk külön Android-eszközt igényel. Az értesítések háttérbeli időzítését, az élő állapotsávjelzést és a 120 Hz-es működést fizikai eszközön is ellenőrizni kell.
 
-```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+## Dokumentáció és közreműködés
 
-Az eszköztesztek fordítása és futtatása külön is indítható.
+- [Használat, témák és ösztöndíjbecslés](docs/USAGE.md)
+- [Értesítések és élő tanóra](docs/NOTIFICATIONS.md)
+- [Közreműködés és fejlesztői ellenőrzések](CONTRIBUTING.md)
+- [Kiadás és aláírás](docs/RELEASING.md)
+- [Adatkezelés](PRIVACY.md) · [Biztonsági hibák bejelentése](SECURITY.md)
 
-```bash
-./gradlew :app:assembleDebugAndroidTest
-./gradlew :app:connectedDebugAndroidTest
-```
-
-A JVM-tesztek a PKCE-képzést, a Firka bejelentkezési URL-jét, a visszatérés ellenőrzését, a párhuzamos tokenmegújítást, az indítási és igény szerinti heti szinkront, a szerveroldali várakozási idő betartását, a részhibákat, a gyorsítótár egyeztetését, az adatfeldolgozást és a helyi profil formátumát ellenőrzik. Az eszköztesztek a bejelentkezési böngésző megnyitását, a navigációt, a témaváltást, a profil mentését, a képimportot és a fiókok elkülönítését fedik le.
-
-A GitHub Actions minden `main` ágra küldött módosításnál és pull requestnél lefordítja az alkalmazást és az eszközteszteket, futtatja a JVM-teszteket és a lintet, majd letölthetővé teszi az APK-t. A natív böngésző eszköztesztjei külön, csatlakoztatott Android-eszközön indíthatók.
-
-A projekt előkészített felhőkörnyezetében a parancsok előtt futtasd a `source scripts/cloud-env.sh` utasítást. A környezet eszközeinek újratelepítését és ellenőrzését a `bash scripts/cloud-setup.sh` végzi.
-
-## Hibajelentés
-
-Hibát vagy ötletet a [GitHub Issues](https://github.com/VKornel1031/Grafit-/issues) oldalon jelezhetsz. Add meg az alkalmazás és az Android verzióját, az eszköz típusát, valamint a hiba előidézésének lépéseit. A csatolt képernyőképekről és naplókból távolítsd el a személyes és bejelentkezési adatokat.
+Hibát vagy ötletet a [GitHub Issues](https://github.com/VKornel1031/Grafit-/issues) oldalon jelezhetsz. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése és az e-ügyintézési üzenetek nem támogatottak.
 
 ## Köszönet és licenc
 
-A Grafit KRÉTA-integrációja és navigációs felépítése a **QwIT Development és a Firka közreműködőinek** munkájára épül. A Kotlin-megvalósítás, a Material 3 felület és a helyi profilkezelés a Grafit saját adaptációja.
+Köszönet a **QwIT Developmentnek és a Firka közreműködőinek**. Az átvett működés és a módosítások részletei az [ATTRIBUTION.md](ATTRIBUTION.md) fájlban találhatók.
 
-A projekt **Creative Commons Attribution–NonCommercial–ShareAlike 4.0 International**, azaz **CC BY-NC-SA 4.0** licenc alatt érhető el. A felhasználásra a névfeltüntetés, a nem kereskedelmi célú használat és az azonos licenc alatti továbbadás feltételei vonatkoznak.
+A projekt **[CC BY-NC-SA 4.0](LICENSE.txt)** licenc alatt érhető el: névfeltüntetéssel, nem kereskedelmi célra és azonos licenc alatti továbbadással használható. Ez forrásként hozzáférhető projekt, a licenc kereskedelmi korlátozást tartalmaz. A KRÉTA és E-KRÉTA megnevezések a megfelelő jogosultakhoz tartoznak.
 
-A Grafit független alkalmazás. A KRÉTA és E-KRÉTA megnevezések a megfelelő jogosultakhoz tartoznak.
+<div align="center">
 
-[Firka forráskód](https://github.com/QwIT-Development/firka) · [Forrásmegjelölés](ATTRIBUTION.md) · [Teljes licenc](LICENSE.txt)
+**Made By Kodi ❤️**
+
+</div>

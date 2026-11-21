@@ -8,7 +8,6 @@
 
 Magyar nyelvű, natív Android KRÉTA-kliens, személyre szabható Material 3 felülettel.
 
-[![Android](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml/badge.svg)](https://github.com/VKornel1031/Grafit-/actions/workflows/android.yml)
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
 [![Licenc: CC BY-NC-SA 4.0](https://img.shields.io/badge/Licenc-CC_BY--NC--SA_4.0-lightgrey)](LICENSE.txt)
 

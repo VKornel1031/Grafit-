@@ -40,7 +40,7 @@ A Grafit **független alkalmazás**, nem a KRÉTA hivatalos kliense, és nem ál
 
 ## Telepítés
 
-A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.1.1**; változásai a [kiadási jegyzetben](releases/1.1.1.md) olvashatók.
+A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.1.2**; változásai a [kiadási jegyzetben](releases/1.1.2.md) olvashatók.
 
 1. Válassz egy közzétett kiadást, és töltsd le az APK-mellékletét.
 2. Nyisd meg a fájlt a telefonodon. Szükség esetén engedélyezd a telepítést a használt böngésző vagy fájlkezelő számára.

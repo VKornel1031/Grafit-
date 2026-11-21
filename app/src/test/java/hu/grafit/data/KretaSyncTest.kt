@@ -110,7 +110,7 @@ class KretaSyncTest {
                 return delegate.dispatch(request)
             }
         }
-        repeat(3) { api.getTimetableWeek(selected.plusDays(it.toLong())) }
+        repeat(3) { api.getTimetableWeek(monday.plusDays(it.toLong())) }
         assertEquals(1, calls.get())
         assertEquals(before, requireNotNull(api.cached()).lessons)
         // Range coverage survives a new API instance (app restart).
@@ -193,6 +193,29 @@ class KretaSyncTest {
         catch (e: ApiFailure) { assertEquals(429, e.status) }
         assertEquals(1, calls.get())
         assertEquals(before, requireNotNull(api.cached()).lessons)
+    }
+
+    @Test fun backgroundUpdatesFetchOnlyNotificationCollectionsAndPublishValidatedRows() {
+        requests.clear()
+        val updated = CopyOnWriteArrayList<String>()
+        val background = KretaApi(store, OkHttpClient(), "test-agent", server.url("/token").toString(),
+            { server.url("/").toString().trimEnd('/') }, pause = {}, onCollectionUpdated = { key, _ -> updated.add(key) })
+        background.checkNotificationUpdates()
+        assertEquals(listOf("grades", "homework", "tests"), updated)
+        assertEquals(setOf("Ertekelesek", "HaziFeladatok", "BejelentettSzamonkeresek"), requests.map { it.requestUrl!!.encodedPath.substringAfterLast('/') }.toSet())
+        assertEquals(3, requests.size)
+    }
+
+    @Test fun backgroundPartialFailureDoesNotBlockOtherNotificationsOrClearGrades() {
+        api.refreshHomeFeed()
+        failGrades = true
+        val updated = CopyOnWriteArrayList<String>()
+        val background = KretaApi(store, OkHttpClient(), "test-agent", server.url("/token").toString(),
+            { server.url("/").toString().trimEnd('/') }, pause = {}, onCollectionUpdated = { key, _ -> updated.add(key) })
+        try { background.checkNotificationUpdates(); fail("Expected partial failure") }
+        catch (e: ApiFailure) { assertEquals(503, e.status) }
+        assertEquals(listOf("homework", "tests"), updated)
+        assertEquals(1, requireNotNull(background.cached()).grades.size)
     }
 
     @Test fun concurrent401ResponsesRotateRefreshTokenOnce() {

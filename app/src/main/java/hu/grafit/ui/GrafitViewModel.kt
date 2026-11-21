@@ -6,6 +6,9 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import hu.grafit.data.*
+import hu.grafit.notifications.SchoolNotifications
+import hu.grafit.notifications.SchoolServices
+import hu.grafit.notifications.LessonLiveNotification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -13,7 +16,13 @@ import java.time.LocalDate
 
 class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOnStart: Boolean = true) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("appearance", 0)
-    private val api = KretaApi(SecureStore(app))
+    private val api = SchoolServices.api(app)
+    var notificationOptions by mutableStateOf(SchoolNotifications.options(app))
+        private set
+    fun configureNotifications(options: NotificationOptions) {
+        notificationOptions = options
+        SchoolNotifications.save(getApplication(), options)
+    }
     private val profiles = ProfileStore(app)
     var profile by mutableStateOf(api.profileKey?.let(profiles::read) ?: LocalProfile())
         private set
@@ -36,7 +45,16 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     val profileError: String? get() = profileOperation.error
     internal val updates = UpdateController(app, viewModelScope)
     var date by mutableStateOf(today()); private set
-    init { if (signedIn) syncAll(); if (checkUpdatesOnStart) updates.check() }
+    init { if (signedIn) syncAll(); SchoolNotifications.schedule(app); if (checkUpdatesOnStart) updates.check() }
+    /** Bring background-fetched data into the UI without starting another network sync. */
+    fun resumeLocalData() {
+        if (busy || demo || !signedIn) return
+        val account = api.profileKey
+        viewModelScope.launch {
+            val latest = withContext(Dispatchers.IO) { api.cached() }
+            if (!busy && !demo && signedIn && api.profileKey == account && latest != null) data = latest
+        }
+    }
     fun customize(value: Appearance) {
         val updated = value.syncCssControls(appearance).resolveCss()
         appearance = updated
@@ -66,6 +84,8 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
                 // Expose the account only after its local profile has been loaded.
                 profile = localProfile
                 signedIn = true; demo = false; data = null
+                getApplication<Application>().getSystemService(android.app.NotificationManager::class.java).cancelAll()
+                SchoolNotifications.schedule(getApplication())
             } finally {
                 accountChanging = false
             }
@@ -75,6 +95,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     }
     private fun publishSync(snapshot: SchoolData) { viewModelScope.launch { data = snapshot } }
     private fun showSyncIssues() {
+        LessonLiveNotification.requestUpdate(getApplication())
         if (api.syncIssues.isNotEmpty()) {
             val names = api.syncIssues.take(3).joinToString(", ")
             val remaining = if (api.syncIssues.size > 3) " és további ${api.syncIssues.size - 3}" else ""
@@ -124,6 +145,9 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
             try {
                 withContext(Dispatchers.IO) { api.logout() }
                 demo = false; signedIn = false; data = null; profile = LocalProfile(); date = today()
+                SchoolNotifications.schedule(getApplication())
+                LessonLiveNotification.requestUpdate(getApplication())
+                getApplication<Application>().getSystemService(android.app.NotificationManager::class.java).cancelAll()
                 profileOperation.error = null
                 android.webkit.CookieManager.getInstance().removeAllCookies(null)
                 android.webkit.WebStorage.getInstance().deleteAllData()

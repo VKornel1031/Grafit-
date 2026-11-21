@@ -609,6 +609,7 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
             Toggle("Kompakt kártyák", a.compact, { vm.customize(a.copy(compact = it)) })
             Toggle("Jegyek elrejtése", a.hideGrades, { vm.customize(a.copy(hideGrades = it)) }, "Érintsd meg a jegyet a felfedéshez")
         }
+        item { NotificationSettings(vm) }
         item { AppearanceOptions(vm) }
         item {
             Section("Mozgás és képfrissítés")

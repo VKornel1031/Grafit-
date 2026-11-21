@@ -18,14 +18,16 @@
 
 A Grafit egy független, magyar nyelvű Android-alkalmazás a KRÉTA iskolai adataid kezeléséhez. Kotlin és Jetpack Compose alapokon készül, a Firka navigációs felépítésére és KRÉTA-integrációjára támaszkodva.
 
-A **Grafit 1.0.6** órarendje a kiválasztott dátumot mutatja a nyilak között; „Ma” csak a mai nap kiválasztásakor jelenik meg. A folyamatjelzője a tartalom felett jelenik meg: szinkronizálás közben sem mozdul el az órarend vagy a többi képernyő tartalma. Megőrzi az 1.0.4 szinkronizálási javításait. Az órarend indításkor az aktuális és következő hétre frissül; a többi hét megnyitáskor, a helyi gyorsítótárból vagy szükség esetén a KRÉTA-ból töltődik be. A csomag megtartja az R8-optimalizálást, az erőforrás-zsugorítást és a DEX-tömörítést. Az Android 9+ APK ugyanazt az aláírási történetet és állandó éles kulcsot használja, mint a sikeresen telepített verzió, így a meglévő alkalmazás frissíthető az adatok megtartásával.
+A **Grafit 1.1.0** kapcsolható, személyre szabható értesítéseket ad az új jegyekről, házi feladatokról és bejelentett dolgozatokról, a háttérben is. Az élő tanórai értesítés alapból monokróm, és az óra végéig számol vissza. Az órarend nyilai között a kiválasztott dátum jelenik meg; „Ma” csak a mai nap kiválasztásakor látható. A folyamatjelző továbbra sem tolja el a tartalmat. Az optimalizált APK megtartja az állandó éles kulcsot és a működő aláírási történetet, így a meglévő alkalmazás adatai frissítéskor megmaradnak.
 
 ## Funkciók
 
 | Terület | Lehetőségek |
 | --- | --- |
 | **Kezdőlap** | Mai következő tanóra, óravégi és szabadnapi állapot, választható kezdőlapi elemek |
-| **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése |
+| **Órarend** | Heti navigáció, napválasztás, terem, tanár és tananyag megtekintése, helyes dátumfelirat |
+| **Értesítések** | Kapcsolható háttérellenőrzés, kategóriák és saját üzenetsablonok, állítható gyengébbjegy-határ |
+| **Élő tanóra** | Monokróm visszaszámlálás, saját szöveg és szín, választható élő állapotsávjelzés Android 16-tól |
 | **Jegyek** | Tantárgyi átlagok, lenyitható értékelések, éves átlag és technikumi ösztöndíjbecslés |
 | **Hiányzások** | Igazolt és igazolatlan mulasztások, igazolásra váró tételek és késések |
 | **Teendők és hírek** | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
@@ -56,7 +58,7 @@ A jelenlegi APK fejlesztői aláírással készül. Az éles KRÉTA-bejelentkez�
 
 A bejelentkezés a KRÉTA saját oldalán, külön natív Android WebView-képernyőn történik. Az oldal a betöltés közben is látható és használható. A képernyő tetején vékony folyamatjelző, visszalépési és újratöltési gomb segíti a navigációt. Lassú betöltés, hálózati hiba vagy hiányzó Android WebView esetén az alkalmazás hibaüzenetet jelenít meg. A HTTPS-alapú külső intézményi azonosítási oldalakra történő átirányítás is támogatott.
 
-A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Automatikus szinkron csak az alkalmazás indításakor és sikeres bejelentkezés után fut. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a fő navigációs lapok közötti váltás nem indít új szinkront. Korábban le nem töltött órarendi hét megnyitásakor csak az adott hét lekérése történik meg.
+A KRÉTA-adatlekérdezések a Firka kliensének működését követik. Teljes automatikus szinkron az alkalmazás indításakor és sikeres bejelentkezés után fut. Bekapcsolt értesítéseknél ezen felül az Android körülbelül 15 percenként ellenőrzi a jegyeket, házi feladatokat és bejelentett dolgozatokat; ez nem tölti le az órarendet. A **Frissítés** gombbal bármikor kézzel indítható újabb frissítés; a háttérből visszatérés és a fő navigációs lapok közötti váltás nem indít új szinkront. Korábban le nem töltött órarendi hét megnyitásakor csak az adott hét lekérése történik meg.
 
 - A tanulói adatlap és az osztályok, csoportok betöltése után frissülnek a jegyek, házi feladatok, dolgozatok és üzenetek.
 - Az indítási szinkron az aktuális és következő hét órarendjét kéri le. Más hetek igény szerint töltődnek le; a sikeresen letöltött, tanóra nélküli hetek is helyben megmaradnak. A teljes tanév egyszerre történő letöltése nem terheli a szolgáltatást.
@@ -174,20 +176,31 @@ A bejelentkezés OAuth-kódcserét, S256 PKCE-t és a visszatérési munkamenet 
 
 Az egyéni név és profilkép a Grafit helyi profiljához tartozik. Az alkalmazás közvetlenül a KRÉTA szolgáltatásaival kommunikál. Hálózati hiba esetén az utoljára sikeresen letöltött iskolai adatok és a frissítés időpontja segítik a tájékozódást.
 
+## Értesítések és élő visszaszámlálás
+
+A **Beállítások → Értesítések** szakaszban engedélyezheted az iskolai értesítéseket. Android 13-tól a rendszer engedélye is szükséges. Külön kapcsolható az új jegy, a gyengébb jegy, a házi feladat és a bejelentett dolgozat. Minden típushoz saját címet és üzenetet adhatsz, például `{tantargy}: {jegy}`. A gyengébb jegy határa 1–4 között állítható. Az első lekérés nem küld értesítést a régi adatokból, és ugyanaz a rekord később sem ismétlődik.
+
+A háttérben körülbelül 15 percenkénti ellenőrzést az Android ütemezi. Ez nem a hivatalos KRÉTA push szolgáltatása: az energiatakarékosság és a hálózati állapot késleltetheti a kézbesítést. Kényszerített leállítás után nyisd meg újra az alkalmazást. Az üzenetek és a kapcsolók helyben megmaradnak.
+
+Az **Élő tanóra** kapcsoló az elmentett órarend alapján visszaszámlál a tanóra végéig. A kijelzés alapból monokróm; a szöveg, a szín és az előrehaladási sáv módosítható. A számlálót az Android folyamatosan frissíti, az előrehaladási sáv a legutóbbi értesítésfrissítés állapotát mutatja. Android 16-tól a rendszer kiemelt állapotsávjelzést is adhat, ha ezt engedélyezi; a pillát az Android rajzolja. Az órakezdési jelzés energiatakarékosság miatt késhet. Szünetben, ünnepnapon és elmaradt tanóránál nincs aktív visszaszámlálás.
+
+A hang, a rezgés és a zárolt képernyős megjelenés az Android értesítési beállításaiban is szabályozható. [Részletes működés és korlátok](docs/NOTIFICATIONS.md).
+
 ## Fejlesztési állapot
 
-Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek, az értesítések és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
+Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.0.6 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.1.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
 | Debug APK, optimalizált éles APK fordítása | Sikeres; az éles APK állandó kiadási kulccsal aláírva |
 | Éles csomag ellenőrzése | Aláírás, csomagazonosító, nem hibakereshető build és indulási konstruktor ellenőrizve |
-| JVM-tesztek | 71 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
+| JVM-tesztek | 83 sikeres teszt, napi óraállapottal, CSS-ellenőrzéssel, beállításmigrációval és frissítési hivatkozások ellenőrzésével |
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.0.6 éles eszközös ellenőrzése még szükséges |
+| Értesítések | JVM-szabályok és tanóra-időhatárok ellenőrizve; az Android-engedély, háttérütemezés és élő pillakijelzés fizikai eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.1.0 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 

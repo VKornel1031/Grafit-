@@ -24,7 +24,9 @@ class KretaApi(
     private val tokenUrl: String = OAuth.tokenUrl,
     private val schoolUrl: (String) -> String = { "https://$it.e-kreta.hu" },
     private val pause: (Long) -> Unit = Thread::sleep,
-    private val now: () -> Long = System::currentTimeMillis
+    private val now: () -> Long = System::currentTimeMillis,
+    private val onCollectionUpdated: (String, JSONArray) -> Unit = { _, _ -> },
+    private val accountMutationLock: Any = Any()
 ) {
     private val tokens = Any()
     private val cache = SchoolCache(store)
@@ -48,8 +50,10 @@ class KretaApi(
         val key = OAuth.accountKey(idToken)
         response.put("institute", OAuth.institute(idToken)).put("profile_key", key)
             .put("expires_at", now() + response.getLong("expires_in") * 1000 - 60_000)
-        if (profileKey != key) store.clear()
-        store.write("session", response.toString())
+        synchronized(accountMutationLock) {
+            if (profileKey != key) store.clear()
+            store.write("session", response.toString())
+        }
     }
 
     private fun refresh(previous: JSONObject): JSONObject {
@@ -135,6 +139,8 @@ class KretaApi(
         val rows = collection(endpoint(name, from))
         rows.objects().forEach { it.getString("Uid"); validate(it) }
         cache.replace(key, rows)
+        // Notification delivery must never turn a successful school sync into a failure.
+        if (key in setOf("grades", "homework", "tests")) runCatching { onCollectionUpdated(key, rows) }
     }
     private fun messages(key: String, name: String, start: LocalDate) {
         val data = cache.snapshot()
@@ -211,6 +217,26 @@ class KretaApi(
         return result
     }
 
+    /** Background notifications fetch no timetable and do not refresh unrelated collections. */
+    @Synchronized fun checkNotificationUpdates() {
+        if (!signedIn) return
+        session()
+        val failures = mutableListOf<Exception>()
+        val jobs = listOf<() -> Unit>(
+            { replace("grades", "Ertekelesek", validate = Grade::parse) },
+            { replace("homework", "HaziFeladatok", SchoolCache.firstSchoolDay(today()), SchoolTask::homework) },
+            { replace("tests", "BejelentettSzamonkeresek", validate = SchoolTask::exam) }
+        )
+        for (job in jobs) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedException()
+            try { job() }
+            catch (e: ApiFailure) { if (e.authenticationRequired) throw e; failures.add(e) }
+            catch (e: IOException) { failures.add(e) }
+            catch (e: org.json.JSONException) { failures.add(e) }
+        }
+        failures.firstOrNull()?.let { throw it }
+    }
+
     @Synchronized fun getSubjects(): JSONArray {
         val rows = collection("/dktapi/intezmenyek/munkaterek/tanulok")
         cache.replace("subjects", rows)
@@ -239,5 +265,7 @@ class KretaApi(
         SchoolCache.chunks(from, to).forEach { (start, end) -> lessons(start, end) }
         return requireNotNull(cached())
     }
-    @Synchronized fun logout() = synchronized(tokens) { store.clear(); syncIssues = emptyList() }
+    @Synchronized fun logout() = synchronized(tokens) {
+        synchronized(accountMutationLock) { store.clear(); syncIssues = emptyList() }
+    }
 }

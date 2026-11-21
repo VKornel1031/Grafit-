@@ -644,6 +644,6 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         }
     }
     if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit ${BuildConfig.VERSION_NAME}") },
-        text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.") },
+        text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.\n\nMade By Kodi ❤️") },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

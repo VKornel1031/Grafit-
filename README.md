@@ -190,7 +190,7 @@ A hang, a rezgés és a zárolt képernyős megjelenés az Android értesítési
 
 Az 1.0.0 az első stabil verzió; a további fejlesztés folytatódik. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése, az e-ügyintézési üzenetek és a több fiók közötti váltás további fejlesztést igényel. A projekt Android-telefonokra készül.
 
-Az 1.1.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
+Az 1.1.1 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a változatban nem futtattunk.
 
 | Ellenőrzés | Állapot |
 | --- | --- |
@@ -200,7 +200,7 @@ Az 1.1.0 ellenőrzései az alábbi területeket fedik le. Emulátort ebben a vá
 | Android Lint | 0 hiba, stílusjavaslatokkal |
 | Android-eszköztesztek | Teszt-APK fordítása sikeres; eszközön ebben a változatban nem futottak |
 | Értesítések | JVM-szabályok és tanóra-időhatárok ellenőrizve; az Android-engedély, háttérütemezés és élő pillakijelzés fizikai eszközös ellenőrzése még szükséges |
-| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.1.0 éles eszközös ellenőrzése még szükséges |
+| Éles KRÉTA-bejelentkezés és szinkron | A korábbi változat felhasználói visszaigazolása sikeres; az 1.1.1 éles eszközös ellenőrzése még szükséges |
 
 A frissítési tesztek helyi HTTP-kiszolgálóval ellenőrzik a kiadások felismerését, a hivatalos hivatkozásokat és az idegen vagy aláíratlan mellékletek kizárását. A böngészőből indított telepítést és a Play Protect visszajelzését fizikai eszközön kell ellenőrizni. A felhőkörnyezet a GitHub Releases API éles elérését is korlátozza.
 

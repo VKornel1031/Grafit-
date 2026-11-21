@@ -11,7 +11,7 @@ Magyar nyelvű, natív Android KRÉTA-kliens, személyre szabható Material 3 fe
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](app/build.gradle.kts)
 [![Licenc: CC BY-NC-SA 4.0](https://img.shields.io/badge/Licenc-CC_BY--NC--SA_4.0-lightgrey)](LICENSE.txt)
 
-[Letöltés](https://github.com/VKornel1031/Grafit-/releases) · [Használati útmutató](docs/USAGE.md) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Közreműködés](CONTRIBUTING.md)
+[Weboldal](https://grafit.kodiweb.hu/) · [Letöltés](https://github.com/VKornel1031/Grafit-/releases) · [Használati útmutató](docs/USAGE.md) · [Hibajelentés](https://github.com/VKornel1031/Grafit-/issues) · [Közreműködés](CONTRIBUTING.md)
 
 </div>
 

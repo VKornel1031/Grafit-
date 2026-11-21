@@ -563,6 +563,7 @@ private fun Toggle(title: String, checked: Boolean, onChange: (Boolean) -> Unit,
 }
 @Composable
 private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
     val a = vm.appearance
     var about by remember { mutableStateOf(false) }
     LazyColumn(contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -644,6 +645,16 @@ private fun Settings(vm: GrafitViewModel, onLogout: () -> Unit) {
         }
     }
     if (about) AlertDialog(onDismissRequest = { about = false }, title = { Text("Grafit ${BuildConfig.VERSION_NAME}") },
-        text = { Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.\n\nMade By Kodi ❤️") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Natív Android kliens, Kotlin és Jetpack Compose alapokon.\n\nA KRÉTA-integráció és a navigáció a QwIT Development és közreműködői Firka projektjének adaptációja.\n\nCC BY-NC-SA 4.0 · Nem kereskedelmi felhasználás.\ngithub.com/QwIT-Development/firka\n\nA Grafit független alkalmazás.")
+                TextButton(onClick = { uriHandler.openUri("https://grafit.kodiweb.hu/") }, modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Outlined.OpenInNew, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("grafit.kodiweb.hu")
+                }
+                Text("Made By Kodi ❤️", Modifier.fillMaxWidth(), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        },
         confirmButton = { TextButton(onClick = { about = false }) { Text("Rendben") } })
 }

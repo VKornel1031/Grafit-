@@ -12,6 +12,8 @@ Az iskolai adatok közvetlenül a KRÉTA szolgáltatásaitól érkeznek. Nincs k
 
 A frissítéskereső indításkor és kézi ellenőrzéskor a GitHub nyilvános kiadási API-ját használja. Nem küld iskolai adatokat vagy KRÉTA-tokent a GitHubnak. A hálózati szolgáltatások a kapcsolat részeként megkapják az IP-címet és a szokásos kérési adatokat. Frissítés letöltésekor a GitHub oldala a böngészőben nyílik meg. [GitHub adatkezelési tájékoztató](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 
+A névjegyben lévő Grafit-weboldal hivatkozása csak érintésre, a böngészőben nyílik meg. Az alkalmazás nem küld hozzá KRÉTA-adatot; a weboldal látogatására annak saját adatkezelése vonatkozik.
+
 ## Mi marad a készüléken?
 
 | Adat | Tárolás és cél |

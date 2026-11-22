@@ -62,4 +62,15 @@ class ThemeSettingsTest {
             assertTrue(it, runCatching { ThemeCss.parse(it) }.isFailure)
         }
     }
+    @Test fun resettingAllCustomColorsPreservesLayoutTypographyAndOtherPreferences() {
+        val tokens = ThemeCss.colors.associateWith { "#123456" } + mapOf("radius" to "32px", "toolbar" to "pill", "font-family" to "serif")
+        val before = Appearance(mode = "dark", dynamic = false, color = 3, pureBlack = true, haptics = false,
+            customCss = ThemeCss.format(tokens)).resolveCss()
+        val after = before.copy(customCss = ThemeCss.resetColors(before.customCss)).resolveCss()
+        assertEquals(mapOf("radius" to "32px", "toolbar" to "pill", "font-family" to "serif"), ThemeCss.parse(after.customCss))
+        assertEquals(before.copy(customCss = after.customCss), after)
+        assertEquals(after, Appearance.parse(JSONObject(after.json())).resolveCss())
+        assertEquals("", ThemeCss.resetColors(":root { --grafit-primary:#abc; --grafit-grade-1:#123456; }"))
+        assertEquals("", ThemeCss.resetColors(""))
+    }
 }

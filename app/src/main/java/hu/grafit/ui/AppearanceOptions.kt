@@ -24,6 +24,7 @@ internal fun AppearanceOptions(vm: GrafitViewModel) {
     var cssEditor by rememberSaveable { mutableStateOf(false) }
     var colorEditor by rememberSaveable { mutableStateOf<String?>(null) }
     var allColors by rememberSaveable { mutableStateOf(false) }
+    var resetColors by rememberSaveable { mutableStateOf(false) }
     var reset by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HorizontalDivider()
@@ -56,6 +57,9 @@ internal fun AppearanceOptions(vm: GrafitViewModel) {
                     Text(tokens[name] ?: "Alap", style = MaterialTheme.typography.labelSmall)
                 }
             }
+        OutlinedButton(onClick = { resetColors = true }, enabled = tokens.keys.any { it in ThemeCss.colors }, modifier = Modifier.fillMaxWidth()) {
+            Text("Összes saját szín visszaállítása")
+        }
         TextButton(onClick = { allColors = !allColors }) { Text(if (allColors) "Kevesebb színszerep" else "Összes színszerep") }
         OutlinedButton(onClick = { cssEditor = true }, modifier = Modifier.fillMaxWidth()) { Text("Egyéni CSS-téma szerkesztése") }
         Text("Támogatott: --grafit- CSS-változók egy :root blokkban. Színek: #RGB vagy #RRGGBB; méretek: natív képernyőegységek. Webes szelektorok, külső stíluslapok és tetszőleges böngészős CSS nem használható.", style = MaterialTheme.typography.bodySmall)
@@ -99,6 +103,13 @@ internal fun AppearanceOptions(vm: GrafitViewModel) {
             vm.customize(a.copy(customCss = draft)); cssEditor = false
         }) { Text("Alkalmazás") } }, dismissButton = { TextButton(onClick = { cssEditor = false }) { Text("Mégse") } })
     }
+    if (resetColors) AlertDialog(onDismissRequest = { resetColors = false }, title = { Text("Saját színek visszaállítása?") },
+        text = { Text("Az összes saját felületi és jegyszín törlődik a CSS-témából. A kiválasztott paletta vagy Material You színei térnek vissza. Az elrendezés, betűk és egyéb beállítások megmaradnak.") },
+        confirmButton = { TextButton(onClick = {
+            vm.customize(a.copy(customCss = ThemeCss.resetColors(a.customCss)))
+            resetColors = false
+        }) { Text("Színek visszaállítása") } },
+        dismissButton = { TextButton(onClick = { resetColors = false }) { Text("Mégse") } })
     if (reset) AlertDialog(onDismissRequest = { reset = false }, title = { Text("Megjelenés visszaállítása?") },
         text = { Text("A téma, CSS és elrendezés alapértékekre áll. A profilod és az iskolai adatok megmaradnak.") },
         confirmButton = { TextButton(onClick = { vm.customize(Appearance()); reset = false }) { Text("Visszaállítás") } },

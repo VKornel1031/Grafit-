@@ -49,6 +49,8 @@ A **Beállítások** módosításai az egész alkalmazásra érvényesek, és he
 
 A színszerkesztő kör alakú színválasztóval, fényerő-, árnyalat- és telítettségcsúszkával is használható. A pontos hexadecimális színkód továbbra is szerkeszthető. A változás csak az **Alkalmazás** gombbal mentődik.
 
+Az **Összes saját szín visszaállítása** gomb a saját felületi és jegyszíneket egyszerre törli, az egyéb CSS-változókat és beállításokat megtartva. A kiválasztott paletta vagy Material You színei lesznek érvényesek. Egyetlen szín külön is visszaállítható a színszerkesztőben.
+
 ### Egyéni CSS-témaváltozók
 
 A Grafit natív Compose-felületet használ. A témaszerkesztő a Grafit saját változóit értelmezi; nem általános böngészős CSS-t hajt végre. Egyetlen `:root` blokk használható, `--grafit-` előtagú változókkal. Külső stíluslapok és webes szelektorok nem támogatottak.

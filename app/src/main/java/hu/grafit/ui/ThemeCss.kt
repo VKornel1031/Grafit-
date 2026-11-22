@@ -41,6 +41,8 @@ object ThemeCss {
     }
     fun format(tokens: Map<String, String>): String = if (tokens.isEmpty()) "" else
         tokens.entries.joinToString("\n", ":root {\n", "\n}") { "  --grafit-${it.key}: ${it.value};" }
+    fun resetColors(css: String): String = format(parse(css).filterKeys { it !in colors })
+
     fun replace(css: String, name: String, value: String?): String {
         val tokens = parse(css).toMutableMap()
         if (value == null) tokens.remove(name) else tokens[name] = value

@@ -55,4 +55,11 @@ class ThemeSettingsTest {
         assertEquals(androidx.compose.ui.graphics.Color.White, c.onBackground)
         assertEquals(androidx.compose.ui.graphics.Color.White, c.onSurface)
     }
+
+    @Test fun rootBlocksRejectExtraBracesAndAllowWhitespaceWithoutRegexBraceParsing() {
+        assertEquals("#CCC2DC", ThemeCss.parse(":root \n { --grafit-secondary: #CCC2DC; }")["secondary"])
+        listOf(":root { } :root { }", ":root { --grafit-primary:{red}; }", ":root {", ":root }", ":rootx {}").forEach {
+            assertTrue(it, runCatching { ThemeCss.parse(it) }.isFailure)
+        }
+    }
 }

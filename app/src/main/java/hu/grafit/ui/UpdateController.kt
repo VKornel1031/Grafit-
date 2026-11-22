@@ -23,10 +23,14 @@ internal class UpdateController(private val app: Application, private val scope:
         checking = true; error = null; message = null
         scope.launch {
             try {
-                val next = withContext(Dispatchers.IO) { service.latest(version) }
+                val next = withContext(Dispatchers.IO) { service.latest(version, installedInfo().let { if (android.os.Build.VERSION.SDK_INT >= 28) it.longVersionCode else @Suppress("DEPRECATION") it.versionCode.toLong() }) }
                 release = next
                 dismissed = false
-                if (manual && next == null) message = "Nincs újabb, telepíthető stabil GitHub-kiadás."
+                if (manual && next == null) message = if (service.noPublicReleases)
+                    "Nincs nyilvánosan elérhető GitHub-kiadás. A repository és a közzétett Release legyen nyilvános."
+                else service.missingApkVersion?.let {
+                    "Elérhető a(z) $it kiadás, de nincs hozzá telepíthető APK-melléklet."
+                } ?: "Nincs újabb, telepíthető stabil GitHub-kiadás. Azonos verziószámú APK nem számít új frissítésnek."
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { if (manual) message = "A frissítés nem ellenőrizhető. Ellenőrizd a kapcsolatot, és próbáld újra." }
             finally { checking = false }

@@ -4,7 +4,7 @@ A Grafit első éles verziója **1.0.0**, `versionCode = 9`, címkéje `v1.0.0`.
 
 A Git-címke és a forrás közzététele nem hoz létre automatikusan letölthető APK-mellékletet. A telepítők a lent leírt, kézzel indított **Signed release** munkafolyamattal vagy ellenőrzött kézi közzététellel jelennek meg.
 
-A megjelenített verziószám újra 1.0.0, de az Android belső verziókódja tovább nő (20). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
+A nyilvános stabil verziószámozás 1.0.0-ról indult; a jelenlegi hibajavítás 1.0.1. Az Android belső verziókódja tovább nő (21). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
 
 ## Állandó kiadási kulcs
 
@@ -20,7 +20,7 @@ A nyilvános tanúsítvány: [release-signing-certificate.pem](release-signing-c
 
 A tulajdonos privát kulcsmentésében található a `grafit-release.p12` kulcstár és a `keystore-password.txt` jelszófájl; az alias `grafit-release`. Őrizd meg biztonságosan, a felhőkörnyezeten kívül is. Ezeket a fájlokat ne csatold GitHub Release-hez és ne add Git-verziókezeléshez. Minden későbbi kiadás ezt a kulcsot használja.
 
-A jelenlegi forrás megjelenített verziója **1.0.0**, belső `versionCode = 20`. A korábbi Git-címkék változatlanok: a `v1.0.0` továbbra is a korábbi buildre mutat, a legutóbbi változatlan kiadási címke `v1.1.2` (belső verziókód 18). R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi `v1.1.2` példák a korábbi címkézett kiadást mutatják; annak reprodukálásához előbb ezt a címkét kell checkoutolni. A jelenlegi 1.0.0 forrás nem publikálható a meglévő `v1.0.0` címke áthelyezése vagy egy későbbi, új verzió készítése nélkül.
+A jelenlegi forrás megjelenített verziója **1.0.1**, belső `versionCode = 21`. A korábbi Git-címkék változatlanok: a `v1.0.0` továbbra is a korábbi buildre mutat, a legutóbbi változatlan kiadási címke `v1.1.2` (belső verziókód 18). R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi `v1.1.2` példák a korábbi címkézett kiadást mutatják; annak reprodukálásához előbb ezt a címkét kell checkoutolni. A jelenlegi 1.0.1 forrás nem publikálható a megfelelő új kiadási címke létrehozása vagy egy későbbi, új verzió készítése nélkül.
 
 ## Helyi, ellenőrzött kiadás
 
@@ -93,3 +93,9 @@ Az eredeti debug kiadás Android 9+ rendszereken hitelesített kulcsátmenettel 
 A forrás és a dokumentáció megosztható a meglévő licenc alatt. A privát aláírókulcs, a jelszófájl és a helyi környezeti fájl ne kerüljön Gitbe vagy kiadási mellékletbe. A nyilvános tanúsítvány, ujjlenyomat és lineage fájl ellenőrzési adat, nem titok.
 
 A repository láthatósága a GitHub **Settings → General → Danger Zone → Change repository visibility** felületén módosítható. A beállítás megváltoztatása külön tulajdonosi művelet. Publikáláskor ellenőrizd az Issues elérhetőségét, és igény szerint engedélyezd a privát sérülékenység-bejelentést a **Settings → Code security** oldalon. A README letöltési hivatkozásához külön, aláírt APK-t tartalmazó Release szükséges.
+
+## Frissítési metaadatok
+
+A frissítéskereső a legutóbbi 100 GitHub Release-t vizsgálja, nem csak a GitHub által kijelölt latest kiadást. A draft és prerelease kiadások, debug/unsigned APK-k és idegen repository letöltései nem jelöltek. A stabil verzió a címkéből, vagy ennek hiányában a kiadás nevéből olvasható ki; például `v1.0.1` vagy `Grafit 1.0.1`.
+
+A Release **Assets** részébe aláírt `.apk` fájlt csatolj; a GitHub automatikus forráskód-archívuma nem telepítő. Csatold a csomagoláskor készült `release-manifest.json` vagy `signing-migration.json` fájlt is: ezek belső verziókódja segít elkerülni a korábbi fejlesztői buildre való visszafrissítést, illetve felismerni az azonos megjelenített verzióhoz tartozó újabb buildet. Új kiadásnál továbbra is növeld a megjelenített verziót és a belső verziókódot.

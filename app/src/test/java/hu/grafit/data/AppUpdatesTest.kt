@@ -63,4 +63,55 @@ class AppUpdatesTest {
             assertNull(AppUpdates(OkHttpClient(), server.url("/latest").toString()).latest("1.0.1"))
         }
     }
+
+    @Test fun checksOtherPublishedReleasesAndAcceptsVersionFromTitle() {
+        MockWebServer().use { server ->
+            server.start()
+            val asset = JSONObject().put("name", "grafit-1.0.1.apk").put("size", 100)
+                .put("browser_download_url", "https://github.com/VKornel1031/Grafit-/releases/download/stable-patch/grafit.apk")
+            val releases = JSONArray().put(JSONObject().put("tag_name", "v1.0.0"))
+                .put(JSONObject().put("tag_name", "stable-patch").put("name", "Grafit v1.0.1").put("assets", JSONArray().put(asset)))
+            server.enqueue(MockResponse().setBody(releases.toString()))
+            val result = AppUpdates(OkHttpClient(), server.url("/releases").toString()).latest("1.0.0")!!
+            assertEquals("stable-patch", result.version)
+            assertEquals("https://github.com/VKornel1031/Grafit-/releases/tag/stable-patch", releasePageUrl(result.version))
+        }
+    }
+    @Test fun missingApkIsReportedAndDoesNotHideAnotherInstallableRelease() {
+        MockWebServer().use { server ->
+            server.start()
+            server.enqueue(MockResponse().setBody("""[{"tag_name":"v1.0.1","assets":[]}]"""))
+            val service = AppUpdates(OkHttpClient(), server.url("/releases").toString())
+            assertNull(service.latest("1.0.0"))
+            assertEquals("1.0.1", service.missingApkVersion)
+        }
+    }
+    @Test fun foreignBuildMetadataCannotTriggerSameVersionUpdates() {
+        MockWebServer().use { server ->
+            server.start()
+            val prefix = "https://github.com/VKornel1031/Grafit-/releases/download/v1.0.0/"
+            val assets = JSONArray().put(JSONObject().put("name", "release-manifest.json").put("browser_download_url", server.url("/manifest").toString()))
+                .put(JSONObject().put("name", "grafit.apk").put("size", 100).put("browser_download_url", prefix + "grafit.apk"))
+            // Production metadata URLs must remain on this repository; foreign metadata is ignored.
+            server.enqueue(MockResponse().setBody(JSONObject().put("tag_name", "v1.0.0").put("assets", assets).toString()))
+            assertNull(AppUpdates(OkHttpClient(), server.url("/releases").toString()).latest("1.0.0", 20))
+            assertEquals(1, server.requestCount)
+        }
+    }
+
+    @Test fun buildMetadataDetectsReplacementAndRejectsOlderBuilds() {
+        MockWebServer().use { server ->
+            server.start()
+            val assets = JSONArray().put(JSONObject().put("name", "signing-migration.json").put("browser_download_url", server.url("/manifest").toString()))
+                .put(JSONObject().put("name", "grafit.apk").put("size", 100).put("browser_download_url",
+                    "https://github.com/VKornel1031/Grafit-/releases/download/v1.0.0/grafit.apk"))
+            val service = AppUpdates(OkHttpClient(), server.url("/releases").toString(), allowedMetadata = { it.startsWith(server.url("/").toString()) })
+            for (code in listOf(21, 19)) {
+                server.enqueue(MockResponse().setBody(JSONObject().put("tag_name", "v1.0.0").put("assets", assets).toString()))
+                server.enqueue(MockResponse().setBody("""{"version":"1.0.0","versionCode":$code}"""))
+                val result = service.latest("1.0.0", 20)
+                if (code > 20) assertNotNull(result) else assertNull(result)
+            }
+        }
+    }
 }

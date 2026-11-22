@@ -72,7 +72,8 @@ internal fun AppearanceOptions(vm: GrafitViewModel) {
         var value by rememberSaveable(role) { mutableStateOf(ThemeCss.parse(a.customCss)[role] ?: "#%06X".format(fallback.toArgb() and 0xFFFFFF)) }
         val validation = runCatching { ThemeCss.replace(a.customCss, role, value) }
         AlertDialog(onDismissRequest = { colorEditor = null }, title = { Text("Szín · $role") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            text = { Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ColorWheel(value) { value = it }
                 OutlinedTextField(value, { value = it }, singleLine = true, label = { Text("Hex szín") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii), isError = validation.isFailure)
                 if (validation.isSuccess) Box(Modifier.fillMaxWidth().height(56.dp).background(cssColor(value), MaterialTheme.shapes.medium))

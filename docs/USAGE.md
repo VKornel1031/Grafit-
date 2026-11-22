@@ -47,6 +47,8 @@ A **Beállítások** módosításai az egész alkalmazásra érvényesek, és he
 - látható kezdőlapi elemek, navigációs feliratok és jegyek elrejtése;
 - 60 vagy 120 Hz, ha a kijelző támogatja. A tényleges képfrissítést az Android energiatakarékossága is befolyásolhatja.
 
+A színszerkesztő kör alakú színválasztóval, fényerő-, árnyalat- és telítettségcsúszkával is használható. A pontos hexadecimális színkód továbbra is szerkeszthető. A változás csak az **Alkalmazás** gombbal mentődik.
+
 ### Egyéni CSS-témaváltozók
 
 A Grafit natív Compose-felületet használ. A témaszerkesztő a Grafit saját változóit értelmezi; nem általános böngészős CSS-t hajt végre. Egyetlen `:root` blokk használható, `--grafit-` előtagú változókkal. Külső stíluslapok és webes szelektorok nem támogatottak.

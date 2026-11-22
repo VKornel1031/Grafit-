@@ -15,8 +15,13 @@ object ThemeCss {
         require(css.length <= 16_384) { "A téma legfeljebb 16 384 karakter lehet." }
         val clean = css.replace(Regex("/\\*.*?\\*/", RegexOption.DOT_MATCHES_ALL), "").trim()
         if (clean.isEmpty()) return emptyMap()
-        val body = Regex(":root\\s*\\{([^{}]*)}", RegexOption.DOT_MATCHES_ALL).matchEntire(clean)?.groupValues?.get(1)
-            ?: throw IllegalArgumentException("A téma egy :root { … } blokk legyen. Csak Grafit CSS-változók használhatók.")
+        // Android uses ICU regex, whose brace handling differs from the desktop JVM.
+        val opening = clean.indexOf('{')
+        require(opening >= 0 && clean.substring(0, opening).trim() == ":root" && clean.endsWith('}')) {
+            "A téma egy :root { … } blokk legyen. Csak Grafit CSS-változók használhatók."
+        }
+        val body = clean.substring(opening + 1, clean.length - 1)
+        require('{' !in body && '}' !in body) { "Csak egyetlen :root blokk használható." }
         return buildMap {
             body.split(';').filter { it.isNotBlank() }.forEach { declaration ->
                 val pair = declaration.trim().split(':', limit = 2)

@@ -26,10 +26,10 @@ A Grafit **független alkalmazás**, nem a KRÉTA hivatalos kliense, és nem ál
 | Terület | Mit kínál? |
 | --- | --- |
 | Kezdőlap | Következő tanóra, napi órarend, legutóbbi jegyek és hírek; jelzés, ha nincs tanítás vagy véget ért a nap |
-| Órarend | Heti és napi navigáció, tanterem, tanár és tananyag; a további hetek betöltése igény szerint |
+| Órarend | Heti és napi navigáció, tanterem, tanár, tananyag és megnyitható feladatrészletek; a további hetek betöltése igény szerint |
 | Jegyek | Tantárgyi és éves átlag, részletes értékelések, technikumi ösztöndíjbecslés |
 | Hiányzások | Igazolt, igazolatlan és igazolásra váró mulasztások, késések |
-| Teendők | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések |
+| Teendők | Házi feladatok, bejelentett dolgozatok, faliújság és tanári feljegyzések, felugró részletes nézettel |
 | Értesítések | Választható háttérellenőrzés, saját üzenetsablonok és állítható gyengébbjegy-határ |
 | Élő tanóra | Alapból monokróm visszaszámlálás a tanóra végéig; testre szabható szöveg és megjelenés |
 | Személyre szabás | Material You, saját paletta és jegyszínek, CSS-témaváltozók, kapszula eszköztárak, kártyák és betűk |
@@ -39,7 +39,7 @@ A Grafit **független alkalmazás**, nem a KRÉTA hivatalos kliense, és nem ál
 
 ## Telepítés
 
-A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.0.1**; változásai a [kiadási jegyzetben](releases/1.0.1-patch.md) olvashatók.
+A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.1.1**; változásai a [kiadási jegyzetben](releases/1.1.1-details.md) olvashatók.
 
 1. Válassz egy közzétett kiadást, és töltsd le az APK-mellékletét.
 2. Nyisd meg a fájlt a telefonodon. Szükség esetén engedélyezd a telepítést a használt böngésző vagy fájlkezelő számára.

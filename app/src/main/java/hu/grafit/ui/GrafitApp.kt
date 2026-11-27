@@ -261,6 +261,7 @@ private fun Empty(message: String) {
 @Composable
 private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit) {
     val data = vm.data
+    var selectedMessage by remember { mutableStateOf<SchoolTask?>(null) }
     val now by produceState(LocalDateTime.now(schoolZone)) {
         while (true) {
             value = LocalDateTime.now(schoolZone)
@@ -327,11 +328,13 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         item { Section("Teendők és hírek") }
         if (tasks.isEmpty()) item { Empty("Nincs megjeleníthető teendő vagy hír.") }
         items(tasks) { task ->
-            GrafitCard() {
+            GrafitCard(onClick = { selectedMessage = task }) {
                 Column(Modifier.fillMaxWidth().padding(20.dp)) {
                     Text("${task.kind} · ${task.date}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     Text(task.subject, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 8.dp))
-                    Text(android.text.Html.fromHtml(task.text, android.text.Html.FROM_HTML_MODE_COMPACT).toString(), style = MaterialTheme.typography.bodyMedium)
+                    Text(android.text.Html.fromHtml(task.text, android.text.Html.FROM_HTML_MODE_COMPACT).toString(), style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text("Részletek megnyitása", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -340,7 +343,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         item { Section("A mai napod", "Órarend", timetable) }
         val lessons = dailyLessons
         if (lessons.isEmpty()) item { Empty("Erre a napra nincs tanóra.") }
-        items(lessons) { LessonRow(it, vm.appearance) }
+        items(lessons) { LessonRow(it, vm.appearance, vm.data?.tasks.orEmpty()) }
         }
         item {
             val syncLabel = if (data == null || data.syncedAt == 0L) "Első szinkronizálás folyamatban…"
@@ -350,6 +353,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
         }
     }
     }
+    selectedMessage?.let { MessageDetailDialog(it) { selectedMessage = null } }
 }
 @Composable
 private fun Metric(label: String, value: String, modifier: Modifier) {
@@ -364,9 +368,9 @@ private fun Metric(label: String, value: String, modifier: Modifier) {
     }
 }
 @Composable
-private fun LessonRow(lesson: Lesson, a: Appearance) {
-    var expanded by remember(lesson.id) { mutableStateOf(false) }
-    GrafitCard(modifier = Modifier.animateContentSize(), onClick = { expanded = !expanded }) {
+private fun LessonRow(lesson: Lesson, a: Appearance, tasks: List<SchoolTask>) {
+    var details by remember(lesson.id) { mutableStateOf(false) }
+    GrafitCard(onClick = { details = true }) {
         Row(Modifier.fillMaxWidth().padding(if (a.compact) 12.dp else 18.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.width(56.dp)) {
                 Text(lesson.start.format(timeFormat), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
@@ -378,11 +382,11 @@ private fun LessonRow(lesson: Lesson, a: Appearance) {
                 Text(listOf(lesson.room, lesson.teacher).filter { it.isNotEmpty() }.joinToString(" · "), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (lesson.state == "Elmaradt") Text("Elmaradt", color = MaterialTheme.colorScheme.error)
-                if (expanded) Text(lesson.topic.ifBlank { "Nincs megadott tananyag." }, Modifier.padding(top = 12.dp), style = MaterialTheme.typography.bodyMedium)
             }
-            Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, "Óra részletei")
+            Icon(Icons.Outlined.ChevronRight, "Óra részletei")
         }
     }
+    if (details) LessonDetailDialog(lesson, tasks) { details = false }
 }
 @Composable
 private fun GradeRow(grade: Grade, a: Appearance) {
@@ -446,7 +450,7 @@ private fun Timetable(vm: GrafitViewModel) {
             val shownLessons = vm.data?.lessons.orEmpty().filter { it.start.toLocalDate() == shownDate }
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
                 if (shownLessons.none { it.hasSubject && it.state != "Elmaradt" }) item { Empty("Ezen a napon nincsenek tanóráid a letöltött órarend szerint.") }
-                items(shownLessons) { LessonRow(it, vm.appearance) }
+                items(shownLessons) { LessonRow(it, vm.appearance, vm.data?.tasks.orEmpty()) }
             }
         }
     }

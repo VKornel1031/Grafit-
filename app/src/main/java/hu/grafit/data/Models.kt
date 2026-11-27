@@ -36,13 +36,14 @@ fun average(grades: List<Grade>): Double? {
 
 data class Lesson(val id: String, val subject: String, val start: LocalDateTime, val end: LocalDateTime,
                   val room: String, val teacher: String, val topic: String, val state: String,
-                  val hasSubject: Boolean = true, val subjectId: String? = null) {
+                  val hasSubject: Boolean = true, val subjectId: String? = null, val homeworkId: String? = null) {
     companion object {
         fun parse(j: JSONObject) = Lesson(j.text("Uid"), j.subject(), localTime(j.getString("KezdetIdopont")),
             localTime(j.getString("VegIdopont")), j.text("TeremNeve"), j.text("HelyettesTanarNeve", j.text("TanarNeve")),
             j.text("Tema"), j.optJSONObject("Allapot")?.text("Nev") ?: "",
             j.optJSONObject("Tantargy")?.text("Nev")?.isNotBlank() == true,
-            j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() })
+            j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() },
+            j.text("HaziFeladatUid").takeIf { it.isNotBlank() })
     }
 }
 data class Absence(val subject: String, val date: String, val state: String, val minutes: Int) {
@@ -82,13 +83,20 @@ data class SchoolData(val student: String, val school: String, val grades: List<
 }
 
 
-data class SchoolTask(val subject: String, val kind: String, val text: String, val date: String) {
+data class SchoolTask(val subject: String, val kind: String, val text: String, val date: String,
+                      val id: String = "", val subjectId: String? = null, val teacher: String = "", val assignedDate: String = "") {
     companion object {
-        fun parse(j: JSONObject) = SchoolTask(j.text("subject"), j.text("kind"), j.text("text"), j.text("date"))
-        fun homework(j: JSONObject) = SchoolTask(j.subject(), "Házi feladat", j.text("Szoveg"), j.text("HataridoDatuma").take(10))
-        fun exam(j: JSONObject) = SchoolTask(j.subject(), "Dolgozat", j.text("Temaja"), j.text("Datum").take(10))
-        fun note(j: JSONObject) = SchoolTask(j.text("Cim"), "Feljegyzés", j.text("Tartalom"), j.text("Datum").take(10))
-        fun notice(j: JSONObject) = SchoolTask(j.text("Cim"), "Faliújság", j.text("TartalomText"), j.text("ErvenyessegKezdete").take(10))
+        fun parse(j: JSONObject) = SchoolTask(j.text("subject"), j.text("kind"), j.text("text"), j.text("date"),
+            j.text("id"), j.text("subjectId").takeIf { it.isNotBlank() }, j.text("teacher"), j.text("assignedDate"))
+        fun homework(j: JSONObject) = SchoolTask(j.subject(), "Házi feladat", j.text("Szoveg"), j.text("HataridoDatuma").take(10),
+            j.text("Uid"), j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() }, j.text("RogzitoTanarNeve"), j.text("FeladasDatuma").take(10))
+        fun exam(j: JSONObject) = SchoolTask(j.subject(), "Dolgozat", j.text("Temaja"), j.text("Datum").take(10),
+            j.text("Uid"), j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() }, j.text("RogzitoTanarNeve"))
+        fun note(j: JSONObject) = SchoolTask(j.text("Cim"), "Feljegyzés", j.text("Tartalom").ifBlank { j.text("TartalomFormazott") }, j.text("Datum").take(10),
+            id = j.text("Uid"), teacher = j.text("KeszitoTanarNeve"))
+        fun notice(j: JSONObject) = SchoolTask(j.text("Cim"), "Faliújság", j.text("TartalomText").ifBlank { j.text("Tartalom") }, j.text("ErvenyessegKezdete").take(10),
+            id = j.text("Uid"), teacher = j.text("RogzitoNeve"))
     }
     fun json() = JSONObject().put("subject", subject).put("kind", kind).put("text", text).put("date", date)
+        .put("id", id).put("subjectId", subjectId).put("teacher", teacher).put("assignedDate", assignedDate)
 }

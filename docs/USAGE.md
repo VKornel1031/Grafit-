@@ -12,6 +12,14 @@ Indításkor az aktuális és következő hét órarendje frissül. A még le ne
 
 A kezdőlap a budapesti naptári naphoz tartozó, el nem maradt tanórákból választ. Az utolsó tanóra után **Mára nincs több órád.**, tanóra nélküli napon **Ma nincsenek óráid.** jelenik meg. Ezek a jelzések az utoljára letöltött órarenden alapulnak.
 
+## Üzenetek és tanórai részletek
+
+A kezdőlapi **Teendők és hírek** kártyái megérinthetők. A felugró ablakban az üzenet teljes, kijelölhető szövege, típusa, dátuma és – ha rendelkezésre áll – készítője vagy tanára látszik. Házi feladatnál a feladás dátuma és a határidő is megjelenik. Hosszabb szöveg az ablakon belül görgethető; bezáráshoz a **Bezárás** gomb vagy a rendszer visszalépése használható.
+
+Az **Órarend** tanórájának megérintése részletes ablakot nyit az időponttal, teremmel, tanárral és tananyaggal. Az **Az órához rendelt házi feladat** szakasz a KRÉTA közvetlen feladatkapcsolatát használja. Az **Ebből a tantárgyból erre a napra esedékes** szakasz ettől külön mutatja az azonos tárgyból a tanóra napjára határidős házi feladatokat és dolgozatokat. Így a határidő szerinti egyezés nem jelenik meg közvetlen tanórai hozzárendelésként.
+
+Ha a KRÉTA jelöl házi feladatot, de annak részletei nem kerültek még letöltésre, az ablak ezt külön jelzi. A részletek megnyitása nem indít hálózati lekérést; az adatok a következő kézi vagy indítási frissítéskor változnak. A kezdőlapi napi órarendben ugyanaz a tanórai ablak nyitható meg.
+
 ## Jegyek és ösztöndíj
 
 A **Jegyek** oldalon a tantárgy megérintésével nyithatók meg az értékelések. A tantárgy átlagába az elérhető, pozitív súlyú numerikus osztályzatok számítanak. A jegy nélküli tantárgynál „—” jelenik meg. Az alkalmazás az azonos tantárgyak különböző névváltozatait és azonosítóit közös sorba egyezteti.

@@ -33,12 +33,13 @@ object GoogleCalendarSync {
             val data = cached.first ?: return
             SavedExport(account, data, StudyStore(context).read(account), cached.second)
         }
-        if (snapshot.state.calendarSync && permitted(context)) sync(context, snapshot.account, snapshot.data, snapshot.state, true, snapshot.coverage)
+        if (snapshot.state.calendarSync && permitted(context)) sync(context, snapshot.account, snapshot.data, true, snapshot.coverage)
     }
     private data class SavedExport(val account: String, val data: SchoolData, val state: StudyState, val coverage: List<Pair<java.time.LocalDate, java.time.LocalDate>>)
     private fun prefix(account: String) = "grafit://events/${accountHash(account)}/"
-    @Synchronized fun sync(context: Context, account: String, data: SchoolData, state: StudyState, replaceSchool: Boolean = false, coverage: List<Pair<java.time.LocalDate, java.time.LocalDate>> = emptyList()): Int {
-        if (!state.calendarSync || state.calendarId < 0) return 0
+    @Synchronized fun sync(context: Context, account: String, data: SchoolData, replaceSchool: Boolean = false, coverage: List<Pair<java.time.LocalDate, java.time.LocalDate>> = emptyList()): Int {
+        val state = StudyStore(context).read(account)
+        if (!state.calendarSync || state.calendarId < 0 || hu.grafit.notifications.SchoolServices.api(context).profileKey != account) return 0
         check(permitted(context)) { "A naptárengedély hiányzik. Engedélyezd az Android beállításaiban." }
         check(calendars(context).any { it.id == state.calendarId }) { "A kiválasztott naptár már nem írható." }
         val start = today().atStartOfDay()

@@ -73,7 +73,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
                         if (api.profileKey == account) api.calendarSnapshot() else null
                     }
                     if (current?.first != null) {
-                        val count = GoogleCalendarSync.sync(getApplication(), account, current.first!!, state, api.syncIssues.isEmpty(), current.second)
+                        val count = GoogleCalendarSync.sync(getApplication(), account, current.first!!, api.syncIssues.isEmpty(), current.second)
                         withContext(Dispatchers.Main) { if (activeAccount == account) toolsMessage = "$count esemény szinkronizálva a kiválasztott naptárba." }
                     }
                 }
@@ -85,7 +85,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         val id = study.calendarId
         updateStudy(study.copy(calendarSync = false))
         viewModelScope.launch {
-            runCatching { withContext(Dispatchers.IO) { GoogleCalendarSync.removeExports(getApplication(), account, id) } }
+            runCatching { studyWrites.withLock { withContext(Dispatchers.IO) { GoogleCalendarSync.removeExports(getApplication(), account, id) } } }
                 .onSuccess { toolsMessage = "A Grafit által létrehozott események törölve." }.onFailure { toolsMessage = it.message }
         }
     }

@@ -63,12 +63,12 @@ private fun SimulatorScreen(vm: GrafitViewModel) {
     val data = vm.data ?: return
     var reveal by remember { mutableStateOf(!vm.appearance.hideGrades) }
     if (!reveal) { Button(onClick = { reveal = true }, modifier = Modifier.padding(20.dp)) { Text("Jegyszimulátor felfedése") }; return }
-    val subjects = data.gradeSummaries()
+    val subjects = remember(data) { data.gradeSummaries() }
     var selected by rememberSaveable { mutableStateOf(subjects.firstOrNull()?.name.orEmpty()) }
     var number by rememberSaveable { mutableIntStateOf(5) }
     var weight by rememberSaveable { mutableFloatStateOf(100f) }
     var target by remember(selected) { mutableFloatStateOf(vm.study.goals[selected]?.toFloat() ?: 4f) }
-    val simulated = simulatedSubjects(data, vm.study.simulations)
+    val simulated = remember(data, vm.study.simulations) { simulatedSubjects(data, vm.study.simulations) }
     val group = simulated.firstOrNull { it.name == selected }
     var menu by remember { mutableStateOf(false) }
     LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -91,7 +91,7 @@ private fun SimulatorScreen(vm: GrafitViewModel) {
             Text("A hivatalos ösztöndíj a jogosultságtól és az előző tanév év végi átlagától függ.", style = MaterialTheme.typography.bodySmall)
         }
         item {
-            Text("Célátlag: ${"%.2f".format(Locale.ROOT, target)}")
+            Text("Célátlag: ${formatAverage(target.toDouble())}")
             Slider(target, { target = it }, valueRange = 1f..5f, steps = 15, onValueChangeFinished = { vm.updateStudy(vm.study.copy(goals = vm.study.goals + (selected to target.toDouble()))) })
             val needed = gradesNeeded(group?.grades.orEmpty(), target.toDouble(), number, weight.toInt())
             Text(when (needed) { null -> "Ezzel a jeggyel és súllyal a cél nem érhető el."; 0 -> "A célátlagot már eléred."; else -> "$needed további $number-ös jegy kellene (${weight.toInt()}% súly)." })
@@ -297,7 +297,9 @@ private fun CalendarScreen(vm: GrafitViewModel) {
     }
     detail?.let { item -> AlertDialog(onDismissRequest = { detail = null }, title = { Text(item.title) }, text = {
         Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
-            Text("${item.start} – ${item.end}"); Text(plain(item.notes))
+            val format = DateTimeFormatter.ofPattern("yyyy. MM. dd. HH:mm")
+            Text(if (item.allDay) "${item.start.toLocalDate()} · Egész nap" else "${item.start.format(format)} – ${item.end.format(format)}")
+            Text(if (item.key.startsWith("personal:")) item.notes else plain(item.notes))
             vm.study.entries.firstOrNull { "personal:${it.id}" == item.key }?.let { entry -> TextButton(onClick = { detail = null; editor = entry }) { Text("Szerkesztés") } }
         }
     }, confirmButton = { TextButton(onClick = { detail = null }) { Text("Bezárás") } }) }
@@ -357,7 +359,7 @@ private fun SearchScreen(vm: GrafitViewModel) {
         hit.lesson != null -> LessonDetailDialog(hit.lesson, vm.data?.tasks.orEmpty()) { selected = null }
         else -> AlertDialog(onDismissRequest = { selected = null }, title = { Text(if (hit.grade != null && vm.appearance.hideGrades) hit.grade.subject else hit.title) }, text = {
             Column(Modifier.heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
-                Text("${hit.kind} · ${hit.date}"); Text(plain(hit.body))
+                Text("${hit.kind} · ${hit.date}"); Text(if (hit.entry != null) hit.body else plain(hit.body))
                 hit.entry?.let { entry -> TextButton(onClick = { editor = entry; selected = null }) { Text("Szerkesztés") } }
             }
         }, confirmButton = { TextButton(onClick = { selected = null }) { Text("Bezárás") } })

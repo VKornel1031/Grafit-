@@ -51,6 +51,8 @@ class ToolsFlowTest {
         compose.runOnUiThread { vm.startDemo() }
         compose.setContent { GrafitApp(vm) }
         compose.onNodeWithContentDescription("Profil megnyitása").performClick()
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Beállítások")))
+            .performTouchInput { swipeUp() }
         compose.onNodeWithText("Eszközök / Egyéb").performScrollTo().performClick()
         compose.onNodeWithText("Mi lenne, ha?").assertDoesNotExist()
         val planner = compose.onNodeWithText("Tanulási terv").fetchSemanticsNode().boundsInRoot

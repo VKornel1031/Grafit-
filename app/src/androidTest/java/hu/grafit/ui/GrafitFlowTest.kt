@@ -22,6 +22,8 @@ class GrafitFlowTest {
         compose.onNodeWithText("Hiányzások").performClick()
         compose.onNodeWithText("Igazolatlan").assertIsDisplayed()
         compose.onNodeWithContentDescription("Profil megnyitása").performClick()
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Beállítások")))
+            .performTouchInput { swipeUp() }
         compose.onNodeWithText("Beállítások").performScrollTo().performClick()
         compose.onNodeWithText("Legyen a tiéd.").assertIsDisplayed()
         compose.onNodeWithText("Sötét").performClick()
@@ -37,6 +39,8 @@ class GrafitFlowTest {
             compose.setContent { GrafitApp(vm) }
             compose.onNodeWithText("Kipróbálom mintaadatokkal").performClick()
             compose.onNodeWithContentDescription("Profil megnyitása").performClick()
+            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Beállítások")))
+                .performTouchInput { swipeUp() }
             compose.onNodeWithText("Megjelenített név").performTextReplacement("Teszt Elek")
             compose.onNodeWithText("Név mentése").performScrollTo().performClick()
             compose.waitUntil(timeoutMillis = 15_000) { !vm.busy && vm.profile.displayName == "Teszt Elek" }

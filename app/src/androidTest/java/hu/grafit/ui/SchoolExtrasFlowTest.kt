@@ -17,7 +17,7 @@ import java.util.UUID
 @RunWith(AndroidJUnit4::class)
 class SchoolExtrasFlowTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
-    @Test fun monthlyPreviewIsAvailableImmediatelyAndCanBePausedAndRevisited() {
+    @Test fun monthlyRecapIsAvailableImmediatelyAndCanBePausedAndRevisited() {
         val vm = GrafitViewModel(compose.activity.application, checkUpdatesOnStart = false)
         compose.runOnUiThread { vm.startDemo() }
         compose.setContent { GrafitApp(vm) }
@@ -25,7 +25,7 @@ class SchoolExtrasFlowTest {
         compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Beállítások"))).performTouchInput { swipeUp() }
         compose.onNodeWithText("Eszközök / Egyéb").performScrollTo().performClick()
         compose.onNodeWithText("A hónapod").performClick()
-        compose.onNodeWithText("A havi előzetesed már elérhető.").assertIsDisplayed()
+        compose.onNodeWithText("Összefoglaló megnyitása").assertIsEnabled()
         compose.onNodeWithText("Összefoglaló megnyitása").performClick()
         if (vm.appearance.hideGrades) compose.onNodeWithText("Felfedés").performClick()
         compose.onNodeWithContentDescription("Szünet").performClick()

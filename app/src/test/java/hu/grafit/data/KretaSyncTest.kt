@@ -339,4 +339,37 @@ class KretaSyncTest {
         }
         assertEquals("Listás Diák", api.refreshHomeFeed().student)
     }
+
+    @Test fun savedAccountsSwitchOfflineAndKeepCachesAndNotificationBaselinesSeparate() {
+        val vault = MemoryStore()
+        val multi = KretaApi(store, OkHttpClient(), "test", server.url("/token").toString(),
+            { server.url("/").toString().trimEnd('/') }, pause = {}, accountArchive = vault)
+        multi.refreshHomeFeed()
+        store.write("notification_seen", """{"grades":["old"]}""")
+        val firstCache = store.read("school")
+        multi.accounts()
+        val delegate = server.dispatcher
+        val secondPayload = JSONObject().put("kreta:institute_code", "school-a").put("kreta:institute_user_id", "456")
+        val secondIdToken = "header." + Base64.getUrlEncoder().withoutPadding().encodeToString(secondPayload.toString().toByteArray()) + ".signature"
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse {
+                if (request.requestUrl!!.encodedPath == "/token") return json(JSONObject().put("access_token", "second").put("refresh_token", "refresh-second")
+                    .put("expires_in", 3600).put("id_token", secondIdToken).toString())
+                return delegate.dispatch(request)
+            }
+        }
+        multi.login("second-account", "verifier")
+        assertEquals("school-a:456", multi.profileKey)
+        assertNull(store.read("school"))
+        assertNull(store.read("notification_seen"))
+        val calls = server.requestCount
+        multi.switchAccount("school-a:123")
+        assertEquals(calls, server.requestCount)
+        assertEquals(firstCache, store.read("school"))
+        assertEquals("""{"grades":["old"]}""", store.read("notification_seen"))
+        multi.logout()
+        assertEquals(listOf("school-a:456"), multi.accounts().map { it.first })
+        multi.switchAccount("school-a:456")
+        assertEquals("school-a:456", multi.profileKey)
+    }
 }

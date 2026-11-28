@@ -12,10 +12,12 @@ class NotificationJobService : JobService() {
     private var pending: Future<*>? = null
     private var generation = 0
     override fun onStartJob(params: JobParameters): Boolean {
-        if (!SchoolNotifications.options(this).enabled || !SchoolNotifications.canNotify(this)) return false
+        val api = SchoolServices.api(this)
+        val calendarEnabled = api.profileKey?.let { hu.grafit.data.StudyStore(this).read(it).calendarSync } == true && hu.grafit.integrations.GoogleCalendarSync.permitted(this)
+        if (!api.signedIn || (!calendarEnabled && (!SchoolNotifications.options(this).enabled || !SchoolNotifications.canNotify(this)))) return false
         val current = ++generation
         pending = executor.submit {
-            try { SchoolServices.api(this).checkNotificationUpdates(); LessonLiveNotification.update(this) }
+            try { SchoolServices.api(this).checkNotificationUpdates(); hu.grafit.widgets.GrafitWidget.updateAll(this); hu.grafit.integrations.GoogleCalendarSync.syncSaved(this); LessonLiveNotification.update(this) }
             catch (_: Exception) { /* Keep the account and cache; the next scheduled check can recover. */ }
             Handler(Looper.getMainLooper()).post { if (current == generation) jobFinished(params, false) }
         }

@@ -35,11 +35,15 @@ A Grafit **független alkalmazás**, nem a KRÉTA hivatalos kliense, és nem ál
 | Személyre szabás | Material You, saját paletta és jegyszínek, CSS-témaváltozók, kapszula eszköztárak, kártyák és betűk |
 | Helyi profil | Saját megjelenített név és profilkép, fiókonként elkülönítve |
 | Mozgás | Animált navigáció, órarendváltás és jegyfelfedés; választható 60 / 120 Hz a megfelelő kijelzőkön |
+| Iskolai eszköztár | Jegyszimulátor és célátlag, heti tanulási terv, statisztikák, dolgozatfelkészülés és helyi keresés |
+| Naptár | Nap-, hét- és hónapnézet, saját események, választható egyirányú Google Naptár-export |
+| Fiókok | Több titkosított KRÉTA-fiók, külön profilokkal, tervekkel és beállításokkal |
+| Android-widgetek | Mai órarend, következő tanóra, feladatok és rejtést támogató jegylista |
 | Bemutató mód | Kipróbálható felület kitalált adatokkal, KRÉTA-fiók nélkül |
 
 ## Telepítés
 
-A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **1.1.1**; változásai a [kiadási jegyzetben](releases/1.1.1-details.md) olvashatók.
+A közzétett, aláírt telepítők a [GitHub Releases](https://github.com/VKornel1031/Grafit-/releases) oldalon találhatók. Az aktuális forrásverzió **2.0.0**; változásai a [kiadási jegyzetben](releases/2.0.0.md) olvashatók.
 
 1. Válassz egy közzétett kiadást, és töltsd le az APK-mellékletét.
 2. Nyisd meg a fájlt a telefonodon. Szükség esetén engedélyezd a telepítést a használt böngésző vagy fájlkezelő számára.
@@ -56,6 +60,14 @@ A teljes szinkron indításkor, bejelentkezés után és kézi frissítéskor fu
 Az értesítéseket a **Beállítások → Értesítések** menüben kapcsolhatod be. Külön választható az új jegy, a gyengébb jegy, a házi feladat és a bejelentett dolgozat; a címük és szövegük is módosítható. A háttérellenőrzést az Android körülbelül 15 percenként ütemezi: ez nem a hivatalos KRÉTA push szolgáltatása, és az energiatakarékosság késleltetheti.
 
 Az élő tanórai értesítés a helyi órarend alapján számol vissza. A számlálót az Android frissíti; a kiemelt állapotsávjelzés elérhetőségét és megjelenését a rendszer szabályozza. [Részletek és korlátok](docs/NOTIFICATIONS.md).
+
+## Újdonságok a 2.0-ban
+
+Az **Eszközök** lapon próbajegyekkel tervezheted a célátlagot, saját tanulási blokkokat és emlékeztetőket hozhatsz létre, statisztikákat nézhetsz, dolgozatokra készülhetsz és kereshetsz a mentett adatokban. A saját tervek és jegyzetek fiókonként, titkosítva maradnak a készüléken.
+
+A közös naptár órákat, határidőket és saját eseményeket mutat. Külön engedéllyel, választott kategóriákból exportálhat a telefonon lévő Google-naptárba; a felhőszinkront az Android Google-fiókja végzi. Ez egyirányú kapcsolat, és csak a következő 90 nap mentett adataira vonatkozik. Több fiók között új bejelentkezés nélkül válthatsz; a háttérfunkciók az aktív fiókot használják. Négy Android-kezdőképernyős widget is hozzáadható.
+
+[Részletes 2.0-s használati útmutató](docs/TOOLS.md).
 
 ## Adatvédelem
 
@@ -78,12 +90,13 @@ A CI fordítással, JVM-tesztekkel és linttel ellenőriz. Az eszközteszteket l
 ## Dokumentáció és közreműködés
 
 - [Használat, témák és ösztöndíjbecslés](docs/USAGE.md)
+- [2.0-s eszköztár és Google Naptár](docs/TOOLS.md)
 - [Értesítések és élő tanóra](docs/NOTIFICATIONS.md)
 - [Közreműködés és fejlesztői ellenőrzések](CONTRIBUTING.md)
 - [Kiadás és aláírás](docs/RELEASING.md)
 - [Adatkezelés](PRIVACY.md) · [Biztonsági hibák bejelentése](SECURITY.md)
 
-Hibát vagy ötletet a [GitHub Issues](https://github.com/VKornel1031/Grafit-/issues) oldalon jelezhetsz. Jelenleg egy KRÉTA-fiók használható egyszerre. A házi feladatok beadása, a csatolmányok kezelése és az e-ügyintézési üzenetek nem támogatottak.
+Hibát vagy ötletet a [GitHub Issues](https://github.com/VKornel1031/Grafit-/issues) oldalon jelezhetsz. Egyszerre egy mentett KRÉTA-fiók aktív, a további fiókok között a Fiókok menüben válthatsz. A házi feladatok beadása, a csatolmányok kezelése és az e-ügyintézési üzenetek nem támogatottak.
 
 ## Köszönet és licenc
 

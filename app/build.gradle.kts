@@ -17,8 +17,8 @@ android {
         applicationId = "hu.grafit"
         minSdk = if (signingMigration) 28 else 26
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.1.1"
+        versionCode = 24
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {

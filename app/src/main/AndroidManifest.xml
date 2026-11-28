@@ -4,7 +4,15 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <application android:theme="@style/Theme.Grafit" android:label="Grafit" android:icon="@mipmap/ic_grafit" android:roundIcon="@mipmap/ic_grafit" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules" android:supportsRtl="true" android:usesCleartextTraffic="false">
+        <receiver android:name=".integrations.StudyReminderReceiver" android:exported="false" />
+        <receiver android:name=".widgets.WidgetClockReceiver" android:exported="false" />
+        <receiver android:name=".widgets.GrafitWidget" android:label="Grafit – Mai órarend" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_timetable" /></receiver>
+        <receiver android:name=".widgets.NextClassWidget" android:label="Grafit – Következő tanóra" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_next" /></receiver>
+        <receiver android:name=".widgets.HomeworkWidget" android:label="Grafit – Feladatok" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_homework" /></receiver>
+        <receiver android:name=".widgets.GradesWidget" android:label="Grafit – Jegyek" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_grades" /></receiver>
         <receiver android:name=".notifications.LessonAlarmReceiver" android:exported="false" />
         <receiver android:name=".notifications.NotificationRestoreReceiver" android:exported="false">
             <intent-filter>
@@ -16,7 +24,7 @@
         </receiver>
         <service android:name=".notifications.NotificationJobService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
         <activity android:name=".KretaLoginActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

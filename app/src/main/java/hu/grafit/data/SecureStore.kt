@@ -18,8 +18,9 @@ interface StringStore {
 }
 
 class SecureStore(context: Context, preferencesName: String = "grafit_private") : StringStore {
+    companion object { private val keyCreationLock = Any() }
     private val prefs = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
-    private val key: SecretKey by lazy {
+    private val key: SecretKey by lazy { synchronized(keyCreationLock) {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getKey("grafit_storage", null) as? SecretKey) ?: KeyGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
@@ -27,7 +28,7 @@ class SecureStore(context: Context, preferencesName: String = "grafit_private") 
             init(KeyGenParameterSpec.Builder("grafit_storage", KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
         }.generateKey()
-    }
+    } }
     @Synchronized override fun read(name: String): String? {
         val stored = prefs.getString(name, null) ?: return null
         return runCatching {

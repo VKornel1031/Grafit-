@@ -98,6 +98,8 @@ class NotificationRestoreReceiver : BroadcastReceiver() {
         val pending = goAsync()
         Thread {
             try {
+                hu.grafit.integrations.StudyReminders.reschedule(context.applicationContext)
+                hu.grafit.widgets.GrafitWidget.updateAll(context.applicationContext)
                 SchoolNotifications.schedule(context.applicationContext)
                 LessonLiveNotification.update(context.applicationContext)
             } finally { pending.finish() }

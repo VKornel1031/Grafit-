@@ -26,7 +26,8 @@ class KretaApi(
     private val pause: (Long) -> Unit = Thread::sleep,
     private val now: () -> Long = System::currentTimeMillis,
     private val onCollectionUpdated: (String, JSONArray) -> Unit = { _, _ -> },
-    private val accountMutationLock: Any = Any()
+    private val accountMutationLock: Any = Any(),
+    private val accountArchive: StringStore? = null
 ) {
     private val tokens = Any()
     private val cache = SchoolCache(store)
@@ -51,8 +52,9 @@ class KretaApi(
         response.put("institute", OAuth.institute(idToken)).put("profile_key", key)
             .put("expires_at", now() + response.getLong("expires_in") * 1000 - 60_000)
         synchronized(accountMutationLock) {
-            if (profileKey != key) store.clear()
+            if (profileKey != key) { rememberAccount(); store.clear() }
             store.write("session", response.toString())
+            rememberAccount()
         }
     }
 
@@ -265,7 +267,51 @@ class KretaApi(
         SchoolCache.chunks(from, to).forEach { (start, end) -> lessons(start, end) }
         return requireNotNull(cached())
     }
+    fun calendarSnapshot(): Pair<SchoolData?, List<Pair<LocalDate, LocalDate>>> {
+        val raw = cache.snapshot()
+        return runCatching { SchoolData.parse(raw) }.getOrNull() to raw.optJSONArray("lessonRanges")?.objects().orEmpty().mapNotNull {
+            runCatching { LocalDate.parse(it.getString("from")) to LocalDate.parse(it.getString("to")) }.getOrNull()
+        }
+    }
+    fun lessonCoverage(): List<Pair<LocalDate, LocalDate>> = cache.snapshot().optJSONArray("lessonRanges")?.objects().orEmpty().mapNotNull {
+        runCatching { LocalDate.parse(it.getString("from")) to LocalDate.parse(it.getString("to")) }.getOrNull()
+    }
+    private fun archive(): JSONObject = accountArchive?.read("accounts")?.let(::JSONObject) ?: JSONObject()
+    private fun rememberAccount() {
+        val archiveStore = accountArchive ?: return
+        val key = profileKey ?: return
+        val accounts = archive()
+        val record = JSONObject()
+        listOf("session", "school", "notification_seen").forEach { name -> store.read(name)?.let { record.put(name, it) } }
+        record.put("name", cached()?.student ?: key.substringBefore(':'))
+        accounts.put(key, record)
+        archiveStore.write("accounts", accounts.toString())
+    }
+    @Synchronized fun accounts(): List<Pair<String, String>> {
+        rememberAccount()
+        val accounts = archive()
+        return accounts.keys().asSequence().map { it to accounts.getJSONObject(it).text("name", it) }.toList()
+    }
+    @Synchronized fun switchAccount(key: String) {
+        rememberAccount()
+        val record = archive().optJSONObject(key) ?: throw IllegalArgumentException("A mentett fiók nem található.")
+        synchronized(accountMutationLock) {
+            store.clear()
+            listOf("session", "school", "notification_seen").forEach { name -> record.text(name).takeIf(String::isNotBlank)?.let { store.write(name, it) } }
+            syncIssues = emptyList()
+        }
+    }
+    @Synchronized fun forgetAccount(key: String) {
+        require(key != profileKey) { "Az aktív fiókból előbb jelentkezz ki." }
+        val accounts = archive().apply { remove(key) }
+        accountArchive?.write("accounts", accounts.toString())
+    }
     @Synchronized fun logout() = synchronized(tokens) {
-        synchronized(accountMutationLock) { store.clear(); syncIssues = emptyList() }
+        synchronized(accountMutationLock) {
+            val key = profileKey
+            val accounts = archive().apply { if (key != null) remove(key) }
+            accountArchive?.write("accounts", accounts.toString())
+            store.clear(); syncIssues = emptyList()
+        }
     }
 }

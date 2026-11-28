@@ -26,7 +26,7 @@ object SchoolServices {
             val options = SchoolNotifications.options(app)
             val events = tracker.update(key, rows, options)
             if (SchoolNotifications.canNotify(app)) events.forEach { SchoolNotifications.post(app, it, options) }
-        }, accountMutationLock = accountLock).also { client = it }
+        }, accountMutationLock = accountLock, accountArchive = SecureStore(app, "grafit_accounts")).also { client = it }
     }
 }
 
@@ -49,7 +49,9 @@ object SchoolNotifications {
 
     fun schedule(context: Context) {
         val scheduler = context.getSystemService(android.app.job.JobScheduler::class.java)
-        val enabled = options(context).enabled && options(context).categories.isNotEmpty() && canNotify(context) && SchoolServices.api(context).signedIn
+        val api = SchoolServices.api(context)
+        val calendarEnabled = api.profileKey?.let { StudyStore(context).read(it).calendarSync } == true && hu.grafit.integrations.GoogleCalendarSync.permitted(context)
+        val enabled = api.signedIn && ((options(context).enabled && options(context).categories.isNotEmpty() && canNotify(context)) || calendarEnabled)
         if (!enabled) { scheduler.cancel(JOB_ID); return }
         // Keep an existing schedule: repeated app opens must not postpone the next check.
         if (scheduler.getPendingJob(JOB_ID) == null) scheduler.schedule(JobInfo.Builder(JOB_ID,

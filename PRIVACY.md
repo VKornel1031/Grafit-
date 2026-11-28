@@ -1,6 +1,6 @@
 # Adatkezelési tájékoztató
 
-Utolsó frissítés: 2026. november 21.
+A 2.0.0-s alkalmazásverzióhoz frissítve.
 
 Ez a dokumentum a Grafit jelenlegi Android-alkalmazásának adatkezelését írja le. A Grafit független kliens, nem a KRÉTA üzemeltetőjének alkalmazása.
 
@@ -14,6 +14,14 @@ A frissítéskereső indításkor és kézi ellenőrzéskor a GitHub nyilvános 
 
 A névjegyben lévő Grafit-weboldal hivatkozása csak érintésre, a böngészőben nyílik meg. Az alkalmazás nem küld hozzá KRÉTA-adatot; a weboldal látogatására annak saját adatkezelése vonatkozik.
 
+## Google Naptár
+
+A naptárengedély opcionális, az Eszközök naptárnézetében kérhető. A READ_CALENDAR az írható naptárak azonosításához és a Grafit saját exportjainak egyeztetéséhez, a WRITE_CALENDAR ezek létrehozásához, frissítéséhez és külön kérésre törléséhez szükséges.
+
+Bekapcsolt exportnál a kiválasztott kategóriák iskolai eseményeinek címe, dátuma, tananyaga, tanára/terme, illetve a kiválasztott saját események jegyzetei a kijelölt készüléknaptárba kerülnek. Google-naptár esetén az Android Google-szinkronja továbbíthatja ezeket a Google-fiókba. Az export alapból kikapcsolt, a cél és a kategóriák külön választhatók. Bemutató módból nincs valódi export.
+
+A Grafit nem kér Google-jelszót, és nem használ külön Grafit-szervert a naptárszinkronhoz. Más alkalmazás eseményeit nem írja át. A saját exportok azonosításához fiókonként külön, hash-elt azonosítót használ. A Google-fiókba már továbbított adatokra a Google adatkezelése vonatkozik; az alkalmazás törlése nem törli ezeket. A saját exportok külön megerősítéssel távolíthatók el a kijelölt naptárból.
+
 ## Mi marad a készüléken?
 
 | Adat | Tárolás és cél |
@@ -22,6 +30,8 @@ A névjegyben lévő Grafit-weboldal hivatkozása csak érintésre, a böngész�
 | Iskolai gyorsítótár | Titkosított alkalmazástár; megjelenítés és korábban letöltött adatok elérése hálózati hiba esetén |
 | Saját név és profilkép | Fiókonként elkülönített, titkosított helyi profil; a kép legfeljebb 512 × 512 képpontos másolata |
 | Értesítésekhez már feldolgozott rekordazonosítók | Titkosított fióktár; az ismételt értesítések elkerülése |
+| Saját tervek, próbajegyek, célátlagok, dolgozatjegyzetek és fiókonkénti beállításmentések | Titkosított, fiókonként elkülönített helyi tár; nem kerülnek a KRÉTA-ba |
+| Több fiók mentett munkamenete és iskolai gyorsítótára | Titkosított helyi fióktár; új bejelentkezés nélküli váltáshoz |
 | Téma, CSS-változók, értesítési kapcsolók és sablonok | Az alkalmazás saját helyi beállítástára; nem külön titkosított beállítások |
 
 Az automatikus Android-felhőmentés és az alkalmazásadatok automatikus eszközátvitele ki van kapcsolva. A Grafit nem tartalmaz reklám- vagy analitikai SDK-t, és nem küld automatikus hibajelentéseket saját szerverre.
@@ -34,9 +44,11 @@ A részletes iskolai tartalom az értesítési felületen megjelenhet. Az alkalm
 
 A profilképet a rendszer képválasztójával választod ki. Az alkalmazás a kiválasztott képről helyi másolatot készít, nem tölt fel profilképet a KRÉTA-hoz. A hálózatállapot és az újraindítási jelzések az engedélyezett háttérfeladatok működését szolgálják. Nincs hely-, névjegy-, mikrofon- vagy kameraengedély.
 
+A kezdőképernyős widgetek a mentett aktív fiók adatait jelenítik meg. A jegyek widgetbeli megjelenítése külön engedélyezendő, és az általános jegyelrejtés is érvényes. A saját tanulási emlékeztetők értesítési engedélyt használnak; időzítésük az Android energiatakarékosságától függ. A keresés és a jegyszimulátor helyben fut.
+
 ## Törlés
 
-Kijelentkezéskor törlődik a munkamenet, az iskolai gyorsítótár és a fiók értesítési alapállapota; a megjelenített értesítések megszűnnek. A helyi név és profilkép megmarad, hogy ugyanazzal a fiókkal később visszatölthető legyen. Az összes helyi adat, profil és beállítás törléséhez használd az Android **Alkalmazások → Grafit → Tárhely → Adatok törlése** lehetőségét, vagy távolítsd el az alkalmazást.
+Kijelentkezéskor az aktív fiók munkamenete, iskolai gyorsítótára és értesítési alapállapota törlődik; más mentett fiókok megmaradnak. Inaktív fiók a fióklistából elfelejthető; a megjelenített értesítések megszűnnek. A helyi név, profilkép és saját tanulási adatok megmaradnak, hogy ugyanazzal a fiókkal később visszatölthető legyen. Az összes helyi adat, profil és beállítás törléséhez használd az Android **Alkalmazások → Grafit → Tárhely → Adatok törlése** lehetőségét, vagy távolítsd el az alkalmazást.
 
 A Grafit helyi adatainak törlése nem törli az iskola KRÉTA-rendszerében tárolt adatokat.
 

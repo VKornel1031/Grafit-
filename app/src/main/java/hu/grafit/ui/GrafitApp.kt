@@ -60,7 +60,7 @@ private val timeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val seeds = listOf(Color(0xFF506A53), Color(0xFF51658F), Color(0xFF80547C), Color(0xFF99613D), Color(0xFF5F6368), Color(0xFF006C67), Color(0xFF8E4A5E))
 private enum class Page(val title: String, val icon: ImageVector) {
     Home("Kezdőlap", Icons.Outlined.Home), Timetable("Órarend", Icons.Outlined.CalendarMonth),
-    Grades("Jegyek", Icons.Outlined.School), Absences("Hiányzások", Icons.Outlined.EventBusy)
+    Grades("Jegyek", Icons.Outlined.School), Absences("Hiányzások", Icons.Outlined.EventBusy), Tools("Eszközök", Icons.Outlined.Dashboard)
 }
 
 @Composable
@@ -95,6 +95,8 @@ private fun AppContent(vm: GrafitViewModel) {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     val page = Page.entries[pager.targetPage]
+    val launchActivity = androidx.activity.compose.LocalActivity.current
+    LaunchedEffect(Unit) { if (launchActivity?.intent?.hasExtra("tool") == true) pager.scrollToPage(Page.Tools.ordinal) }
     fun navigate(target: Page) {
         if (vm.appearance.haptics) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         scope.launch { pager.animateScrollToPage(target.ordinal, animationSpec = tween(FirkaMotion.tabMillis, easing = FirkaMotion.easeInOut)) }
@@ -202,6 +204,7 @@ private fun AppContent(vm: GrafitViewModel) {
                                     Page.Timetable -> Timetable(vm)
                                     Page.Grades -> Grades(vm)
                                     Page.Absences -> Absences(vm)
+                                    Page.Tools -> ToolsScreen(vm, onAddAccount = { openLogin() })
                                 }
                             }
                         }
@@ -233,6 +236,9 @@ private fun Welcome(vm: GrafitViewModel, onLogin: () -> Unit) {
             style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(40.dp))
         Button(onClick = onLogin, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("Bejelentkezés KRÉTA-fiókkal") }
+        vm.savedAccounts.forEach { (key, name) ->
+            TextButton(onClick = { vm.switchAccount(key) }, enabled = !vm.busy) { Text("Belépés mentett fiókkal: $name") }
+        }
         OutlinedButton(onClick = vm::startDemo, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 56.dp)) { Text("Kipróbálom mintaadatokkal") }
         Spacer(Modifier.height(24.dp))
         Text("A bejelentkezés a KRÉTA saját oldalán történik. A Grafit nem tárolja a jelszavadat.",

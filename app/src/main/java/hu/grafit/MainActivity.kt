@@ -10,6 +10,11 @@ import hu.grafit.ui.GrafitApp
 
 class MainActivity : ComponentActivity() {
     private val model: GrafitViewModel by viewModels()
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.hasExtra("tool")) recreate()
+    }
     override fun onResume() {
         super.onResume()
         hu.grafit.notifications.SchoolNotifications.schedule(this)

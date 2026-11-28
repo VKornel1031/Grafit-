@@ -36,6 +36,8 @@ requested = set(re.findall(r"uses-permission: name='([^']+)'", permissions))
 # while installer, exact-alarm, location, camera, and microphone access are not.
 allowed = {
     'android.permission.INTERNET',
+    'android.permission.READ_CALENDAR',
+    'android.permission.WRITE_CALENDAR',
     'android.permission.POST_NOTIFICATIONS',
     'android.permission.ACCESS_NETWORK_STATE',
     'android.permission.RECEIVE_BOOT_COMPLETED',

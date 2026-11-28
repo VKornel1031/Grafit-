@@ -4,7 +4,7 @@ A Grafit első éles verziója **1.0.0**, `versionCode = 9`, címkéje `v1.0.0`.
 
 A Git-címke és a forrás közzététele nem hoz létre automatikusan letölthető APK-mellékletet. A telepítők a lent leírt, kézzel indított **Signed release** munkafolyamattal vagy ellenőrzött kézi közzététellel jelennek meg.
 
-A nyilvános stabil verziószámozás 1.0.0-ról indult; a jelenlegi verzió 1.1.1. Az Android belső verziókódja tovább nő (23). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
+A nyilvános stabil verziószámozás 1.0.0-ról indult; a jelenlegi verzió 2.0.0. Az Android belső verziókódja tovább nő (24). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
 
 ## Állandó kiadási kulcs
 
@@ -20,7 +20,7 @@ A nyilvános tanúsítvány: [release-signing-certificate.pem](release-signing-c
 
 A tulajdonos privát kulcsmentésében található a `grafit-release.p12` kulcstár és a `keystore-password.txt` jelszófájl; az alias `grafit-release`. Őrizd meg biztonságosan, a felhőkörnyezeten kívül is. Ezeket a fájlokat ne csatold GitHub Release-hez és ne add Git-verziókezeléshez. Minden későbbi kiadás ezt a kulcsot használja.
 
-A jelenlegi forrás megjelenített verziója **1.1.1**, belső `versionCode = 23`. A korábbi Git-címkék változatlanok: a `v1.0.0` továbbra is a korábbi buildre mutat, a legutóbbi változatlan kiadási címke `v1.1.2` (belső verziókód 18). R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi `v1.1.2` példák a korábbi címkézett kiadást mutatják; annak reprodukálásához előbb ezt a címkét kell checkoutolni. A jelenlegi 1.1.1 forrás nem publikálható a megfelelő új kiadási címke létrehozása vagy egy későbbi, új verzió készítése nélkül.
+A jelenlegi forrás megjelenített verziója **2.0.0**, belső `versionCode = 24`. Az új kiadási címke `v2.0.0`; a korábbi Git-címkék változatlanok. R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi példák a 2.0.0-s kiadást készítik elő.
 
 ## Helyi, ellenőrzött kiadás
 
@@ -34,12 +34,12 @@ JDK 21, Android SDK 35 / Build Tools 35.0.0, Python 3 és Git szükséges. A mun
 A jelszavakat helyi, nem verziókezelt környezeti fájlból töltsd be. Ezután:
 
 ```bash
-GRAFIT_RELEASE_TAG=v1.1.2 bash scripts/build-release.sh
+GRAFIT_RELEASE_TAG=v2.0.0 bash scripts/build-release.sh
 ```
 
 A script az aktuális release-beállításokkal aláírt APK-t és AAB-t fordít, futtatja a JVM-teszteket és a release lintet, és lefordítja az eszközteszteket. Ellenőrzi az APK aláírását, csomagnevét, minimális jogosultságlistáját, kiadási jelzőit, igazítását és az induláshoz szükséges konstruktort. A `dist/` könyvtárba csak nyilvános fájlok kerülnek:
 
-- `grafit-1.1.2.apk`
+- `grafit-2.0.0.apk`
 - `SHA256SUMS.txt`
 - `release-manifest.json` a verzióval, Git-committal és nyilvános aláírási ujjlenyomattal.
 
@@ -55,10 +55,10 @@ bash scripts/configure-release-secrets.sh /sajat/biztonsagos/kulcsmentes
 
 A script a GitHub CLI titkos tárolójába feltölti a `GRAFIT_KEYSTORE_BASE64`, `GRAFIT_STORE_PASSWORD`, `GRAFIT_KEY_ALIAS`, `GRAFIT_KEY_PASSWORD` repository secret értékeket. A parancs nem írja ki a kulcsot vagy a jelszót. A kulcsot sem a workflow, sem a build nem tölti fel nyilvános mellékletként.
 
-A `v1.1.2` Git-címke után a **Actions → Signed release → Run workflow** felületen válaszd a `v1.1.2` címkét, vagy futtasd:
+A `v2.0.0` Git-címke után a **Actions → Signed release → Run workflow** felületen válaszd a `v2.0.0` címkét, vagy futtasd:
 
 ```bash
-gh workflow run release.yml --repo VKornel1031/Grafit- -f tag=v1.1.2
+gh workflow run release.yml --repo VKornel1031/Grafit- -f tag=v2.0.0
 ```
 
 A workflow ellenőrzi a forráshoz tartozó verziót és az állandó aláírást, majd a megfelelő APK-val, ellenőrzőösszeggel és kiadási jegyzettel létrehozza a stabil GitHub Release-t. Aláírási adatok nélkül nem publikál. A futtató privát kulcsfájlját a végén törli.
@@ -70,8 +70,8 @@ Az általános Android CI aláírókulcs nélkül is ellenőrzi a debug buildet,
 Az ellenőrzött, aláírt csomag saját gépről is publikálható:
 
 ```bash
-gh release create v1.1.2 dist/grafit-1.1.2.apk dist/SHA256SUMS.txt dist/release-manifest.json \
-  --repo VKornel1031/Grafit- --verify-tag --title 'Grafit 1.1.2' --notes-file releases/1.1.2.md
+gh release create v2.0.0 dist/grafit-2.0.0.apk dist/SHA256SUMS.txt dist/release-manifest.json \
+  --repo VKornel1031/Grafit- --verify-tag --title 'Grafit 2.0.0' --notes-file releases/2.0.0.md
 ```
 
 ## Következő verzió

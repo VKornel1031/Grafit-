@@ -59,4 +59,9 @@ class StudyToolsTest {
         assertTrue(canRemoveExport("personal", day, false, emptyList()))
         assertFalse(canRemoveExport("other-app", day, true, coverage))
     }
+    @Test fun utcHomeworkDeadlineUsesTheHungarianCalendarDay() {
+        val task = SchoolTask.homework(org.json.JSONObject("""{"Uid":"hw","HataridoDatuma":"2026-11-27T23:30:00Z","FeladasDatuma":"2026-11-26T23:30:00Z"}"""))
+        assertEquals("2026-11-28", task.date)
+        assertEquals("2026-11-27", task.assignedDate)
+    }
 }

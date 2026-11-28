@@ -47,7 +47,7 @@ data class Lesson(val id: String, val subject: String, val start: LocalDateTime,
     }
 }
 data class Absence(val subject: String, val date: String, val state: String, val minutes: Int) {
-    companion object { fun parse(j: JSONObject) = Absence(j.subject(), j.text("Datum").take(10),
+    companion object { fun parse(j: JSONObject) = Absence(j.subject(), taskDate(j.text("Datum")),
         j.text("IgazolasAllapota"), j.optInt("KesesPercben")) }
 }
 data class SchoolSubject(val name: String, val id: String? = null)
@@ -83,18 +83,20 @@ data class SchoolData(val student: String, val school: String, val grades: List<
 }
 
 
+private fun taskDate(value: String): String = runCatching { localTime(value).toLocalDate().toString() }.getOrDefault(value.take(10))
+
 data class SchoolTask(val subject: String, val kind: String, val text: String, val date: String,
                       val id: String = "", val subjectId: String? = null, val teacher: String = "", val assignedDate: String = "") {
     companion object {
         fun parse(j: JSONObject) = SchoolTask(j.text("subject"), j.text("kind"), j.text("text"), j.text("date"),
             j.text("id"), j.text("subjectId").takeIf { it.isNotBlank() }, j.text("teacher"), j.text("assignedDate"))
-        fun homework(j: JSONObject) = SchoolTask(j.subject(), "Házi feladat", j.text("Szoveg"), j.text("HataridoDatuma").take(10),
-            j.text("Uid"), j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() }, j.text("RogzitoTanarNeve"), j.text("FeladasDatuma").take(10))
-        fun exam(j: JSONObject) = SchoolTask(j.subject(), "Dolgozat", j.text("Temaja"), j.text("Datum").take(10),
+        fun homework(j: JSONObject) = SchoolTask(j.subject(), "Házi feladat", j.text("Szoveg"), taskDate(j.text("HataridoDatuma")),
+            j.text("Uid"), j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() }, j.text("RogzitoTanarNeve"), taskDate(j.text("FeladasDatuma")))
+        fun exam(j: JSONObject) = SchoolTask(j.subject(), "Dolgozat", j.text("Temaja"), taskDate(j.text("Datum")),
             j.text("Uid"), j.optJSONObject("Tantargy")?.text("Uid")?.takeIf { it.isNotBlank() }, j.text("RogzitoTanarNeve"))
-        fun note(j: JSONObject) = SchoolTask(j.text("Cim"), "Feljegyzés", j.text("Tartalom").ifBlank { j.text("TartalomFormazott") }, j.text("Datum").take(10),
+        fun note(j: JSONObject) = SchoolTask(j.text("Cim"), "Feljegyzés", j.text("Tartalom").ifBlank { j.text("TartalomFormazott") }, taskDate(j.text("Datum")),
             id = j.text("Uid"), teacher = j.text("KeszitoTanarNeve"))
-        fun notice(j: JSONObject) = SchoolTask(j.text("Cim"), "Faliújság", j.text("TartalomText").ifBlank { j.text("Tartalom") }, j.text("ErvenyessegKezdete").take(10),
+        fun notice(j: JSONObject) = SchoolTask(j.text("Cim"), "Faliújság", j.text("TartalomText").ifBlank { j.text("Tartalom") }, taskDate(j.text("ErvenyessegKezdete")),
             id = j.text("Uid"), teacher = j.text("RogzitoNeve"))
     }
     fun json() = JSONObject().put("subject", subject).put("kind", kind).put("text", text).put("date", date)

@@ -46,6 +46,16 @@ A profilképet a rendszer képválasztójával választod ki. Az alkalmazás a k
 
 A kezdőképernyős widgetek a mentett aktív fiók adatait jelenítik meg. A jegyek widgetbeli megjelenítése külön engedélyezendő, és az általános jegyelrejtés is érvényes. A saját tanulási emlékeztetők értesítési engedélyt használnak; időzítésük az Android energiatakarékosságától függ. A keresés és a jegyszimulátor helyben fut.
 
+## Új iskolai eszközök és dokumentumok
+
+Az órarend-változások a már letöltött napok összehasonlításából készülnek; az első letöltés nem riasztás. A havi összefoglaló, terheléstérkép és pótlási lista helyi számítás, saját szerver nélkül. A pótlási jelölések, igazolási határidők/jegyzetek és teremjelölések külön, fiókonként titkosítva tárolódnak.
+
+Az igazolásképeket/PDF-eket és alaprajzokat a rendszerválasztón keresztül adod hozzá, legfeljebb 8 MB-os fájlonként. A helyi másolat Android Keystore-kulccsal titkosított. Nincs új általános tárhely-, hely- vagy kameraengedély. Ezek a fájlok nem kerülnek a KRÉTA-ba vagy a Google Naptárba. A saját igazolási állapot nem hivatalos beküldés.
+
+Melléklet megnyitásakor a választott külső alkalmazás ideiglenes, csak olvasási hozzáférést kap egy visszafejtett gyorsítótárpéldányhoz. Havi kártyát csak külön kérésre, a kiválasztott adatkategóriákkal generálunk és az Android megosztópaneljén keresztül adhatsz át más alkalmazásnak. Jegyek és hiányzások megosztása alapból kikapcsolt; nincs név, iskola vagy fiókazonosító a kártyán. A fogadó alkalmazásba átadott adatokra annak saját adatkezelése vonatkozik. Az egy óránál régebbi exportpéldányokat a következő exportnál töröljük a privát gyorsítótárból.
+
+A helyi névhez és tanulási adatokhoz hasonlóan a saját dokumentumok és alaprajzok kijelentkezés után is megmaradnak a későbbi visszalépéshez. Melléklet és alaprajz a saját szerkesztőjében törölhető; az összes helyi adat az Android alkalmazásadat-törlésével vagy eltávolítással távolítható el.
+
 ## Törlés
 
 Kijelentkezéskor az aktív fiók munkamenete, iskolai gyorsítótára és értesítési alapállapota törlődik; más mentett fiókok megmaradnak. Inaktív fiók a fióklistából elfelejthető; a megjelenített értesítések megszűnnek. A helyi név, profilkép és saját tanulási adatok megmaradnak, hogy ugyanazzal a fiókkal később visszatölthető legyen. Az összes helyi adat, profil és beállítás törléséhez használd az Android **Alkalmazások → Grafit → Tárhely → Adatok törlése** lehetőségét, vagy távolítsd el az alkalmazást.

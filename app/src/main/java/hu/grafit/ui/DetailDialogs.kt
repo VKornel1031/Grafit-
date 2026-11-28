@@ -44,7 +44,14 @@ internal fun LessonDetailDialog(lesson: Lesson, tasks: List<SchoolTask>, onDismi
     AlertDialog(onDismissRequest = onDismiss, title = { Text(lesson.subject) }, text = {
         Column(Modifier.fillMaxWidth().heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("${lesson.start.toLocalDate()} · ${lesson.start.format(time)}–${lesson.end.format(time)}", style = MaterialTheme.typography.labelLarge)
-            if (lesson.room.isNotBlank()) Text("Terem: ${lesson.room}")
+            if (lesson.room.isNotBlank()) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                TextButton(onClick = {
+                    context.startActivity(android.content.Intent(context, hu.grafit.MainActivity::class.java)
+                        .putExtra("tool", "rooms").putExtra("room", lesson.room)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP))
+                }) { Text("Terem: ${lesson.room} · keresés az alaprajzon") }
+            }
             if (lesson.teacher.isNotBlank()) Text("Tanár: ${lesson.teacher}")
             if (lesson.state.isNotBlank()) Text(if (lesson.state == "Elmaradt") "Elmaradt tanóra" else lesson.state,
                 color = if (lesson.state == "Elmaradt") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)

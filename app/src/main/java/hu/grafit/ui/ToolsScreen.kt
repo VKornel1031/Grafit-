@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -26,7 +27,9 @@ import java.util.Locale
 import java.util.UUID
 
 private val toolTitles = linkedMapOf("simulator" to "Mi lenne, ha?", "planner" to "Tanulási terv", "stats" to "Statisztikák",
-    "calendar" to "Naptár", "accounts" to "Fiókok", "search" to "Keresés", "prep" to "Dolgozatfelkészülés", "widgets" to "Widgetek")
+    "calendar" to "Naptár", "accounts" to "Fiókok", "search" to "Keresés", "prep" to "Dolgozatfelkészülés", "widgets" to "Widgetek",
+    "recap" to "A hónapod", "changes" to "Órarend-változások", "catchup" to "Hiányoztam",
+    "workload" to "Terheléstérkép", "excuses" to "Igazoláskövető", "rooms" to "Teremkereső")
 private fun plain(value: String) = android.text.Html.fromHtml(value, android.text.Html.FROM_HTML_MODE_COMPACT).toString().trim()
 @Composable
 internal fun ToolsScreen(vm: GrafitViewModel, onAddAccount: () -> Unit) {
@@ -46,11 +49,20 @@ internal fun ToolsScreen(vm: GrafitViewModel, onAddAccount: () -> Unit) {
             "search" -> SearchScreen(vm)
             "prep" -> PreparationScreen(vm)
             "widgets" -> WidgetSettings(vm)
-            else -> LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            "recap" -> MonthlyRecapScreen(vm)
+            "changes" -> TimetableChangesScreen(vm)
+            "catchup" -> CatchUpScreen(vm)
+            "workload" -> WorkloadScreen(vm)
+            "excuses" -> ExcusesScreen(vm)
+            "rooms" -> RoomFinderScreen(vm)
+            else -> LazyColumn(modifier = Modifier.testTag("toolHub"), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item { Text("A te iskolai eszköztárad", style = MaterialTheme.typography.headlineSmall) }
                 val descriptions = listOf("Próbajegyek, célátlag és ösztöndíj", "Saját feladatok, tanulási blokkok és emlékeztetők", "Havi trendek, tantárgyak és hiányzások",
-                    "Órák, határidők, saját események és Google Naptár", "Titkosított, külön tárolt KRÉTA-fiókok", "Keresés az összes mentett iskolai adatban", "Jegyzetek, tananyag és felkészülési lista", "Android-kezdőképernyős widgetek")
-                items(toolTitles.entries.filter { it.key != "simulator" }) { entry -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { tool = entry.key }) {
+                    "Órák, határidők, saját események és Google Naptár", "Titkosított, külön tárolt KRÉTA-fiókok", "Keresés az összes mentett iskolai adatban", "Jegyzetek, tananyag és felkészülési lista", "Android-kezdőképernyős widgetek",
+                    "Animált havi történet, előzetes és visszanézhető összefoglalók", "Terem-, tanár-, időpont- és óraváltozások",
+                    "Kimaradt tananyag, feladatok és pótlási lista", "Két hét terhelése és határidői egy helyen",
+                    "Saját határidők, jegyzetek és titkosított igazolásmellékletek", "Saját alaprajzok és megjelölt tantermek")
+                items(toolTitles.entries.filter { it.key != "simulator" }.sortedBy { if (it.key == "recap") 0 else 1 }) { entry -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { tool = entry.key }) {
                     Column(Modifier.padding(20.dp)) { Text(entry.value, style = MaterialTheme.typography.titleMedium); Text(descriptions[toolTitles.keys.indexOf(entry.key)], style = MaterialTheme.typography.bodySmall) }
                 } }
             }
@@ -146,7 +158,7 @@ private fun EntryRow(entry: StudyEntry, onToggle: () -> Unit, onEdit: () -> Unit
     } }
 }
 @Composable
-private fun EntryEditor(initial: StudyEntry, onDismiss: () -> Unit, onSave: (StudyEntry) -> Unit, onDelete: () -> Unit) {
+internal fun EntryEditor(initial: StudyEntry, onDismiss: () -> Unit, onSave: (StudyEntry) -> Unit, onDelete: () -> Unit) {
     var title by remember(initial.id) { mutableStateOf(initial.title) }
     var subject by remember(initial.id) { mutableStateOf(initial.subject) }
     var date by remember(initial.id) { mutableStateOf(initial.date) }

@@ -1,5 +1,7 @@
 # Grafit 2.0 – iskolai eszközök
 
+Az új havi történet, órarend-változások, pótlás, terheléstérkép, igazoláskövető és teremkereső használata: [új iskolai eszközök](SCHOOL_EXTRAS.md).
+
 A jegyszimulátor a **Jegyek / Tantárgyak → Mi lenne, ha?** kártyáról nyitható meg. A többi eszköz a jobb felső profilképre koppintva, az **Eszközök / Egyéb** menüpontban érhető el. Az eszközkártyák egységesen kitöltik a rendelkezésre álló szélességet. A tanulási adatok, próbajegyek, célátlagok és felkészülési jegyzetek fiókonként elkülönítve, Android Keystore-kulccsal titkosítva maradnak a készüléken.
 
 ## Tantárgyak és jegygrafikon

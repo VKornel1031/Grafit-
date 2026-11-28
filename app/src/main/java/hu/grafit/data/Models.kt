@@ -54,7 +54,7 @@ data class SchoolSubject(val name: String, val id: String? = null)
 
 data class SchoolData(val student: String, val school: String, val grades: List<Grade>,
                       val lessons: List<Lesson>, val absences: List<Absence>, val syncedAt: Long = System.currentTimeMillis(), val tasks: List<SchoolTask> = emptyList(),
-                      val subjects: List<SchoolSubject> = emptyList()) {
+                      val subjects: List<SchoolSubject> = emptyList(), val lessonChanges: List<LessonChange> = emptyList()) {
     val subjectNames: List<String> get() = subjects.map { it.name }.distinct()
     companion object {
         fun parse(j: JSONObject) = SchoolData(j.getJSONObject("student").text("Nev"),
@@ -63,7 +63,8 @@ data class SchoolData(val student: String, val school: String, val grades: List<
             (j.optJSONArray("absences") ?: JSONArray()).objects().map(Absence::parse), j.optLong("syncedAt"), j.optJSONArray("tasks")?.objects()?.map(SchoolTask::parse).orEmpty(),
             j.optJSONArray("subjects")?.objects().orEmpty().filter { it.optInt("tipusId", 0) == 0 }
                 .map { SchoolSubject(it.text("tantargyNev").trim(), it.text("tantargyId").takeIf { id -> id.isNotBlank() }) }
-                .filter { it.name.isNotBlank() }.distinct())
+                .filter { it.name.isNotBlank() }.distinct(),
+            j.optJSONArray("lessonChanges")?.objects().orEmpty().map(LessonChange::parse))
         fun demo(): SchoolData {
             val subjects = listOf("Matematika", "Magyar irodalom", "Történelem", "Angol nyelv", "Informatika")
             val date = today()

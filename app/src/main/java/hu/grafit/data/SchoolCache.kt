@@ -46,6 +46,11 @@ class SchoolCache(private val store: StringStore) {
         val fresh = rows.objects().map { it to Lesson.parse(it) }
             .filter { (_, lesson) -> lesson.start.toLocalDate() >= from && lesson.start.toLocalDate() < to }
         update { data ->
+            val rangesBefore = array(data, "lessonRanges").objects().map { LocalDate.parse(it.getString("from")) to LocalDate.parse(it.getString("to")) }
+            val old = array(data, "lessons").objects().map(Lesson::parse).filter { it.start.toLocalDate() >= from && it.start.toLocalDate() < to }
+            val changes = timetableChanges(old, fresh.map { it.second }, { day -> rangesBefore.any { day >= it.first && day < it.second } }, System.currentTimeMillis())
+            val history = array(data, "lessonChanges").objects().map(LessonChange::parse) + changes
+            data.put("lessonChanges", JSONArray(history.distinctBy { it.id }.takeLast(100).map { it.json() }))
             val retained = array(data, "lessons").objects().filter {
                 val date = localTime(it.getString("KezdetIdopont")).toLocalDate()
                 date < from || date >= to

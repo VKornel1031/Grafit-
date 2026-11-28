@@ -27,6 +27,55 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         SchoolNotifications.save(getApplication(), options)
         activeAccount?.let { account -> viewModelScope.launch { studyWrites.withLock { withContext(Dispatchers.IO) { studyStore.saveNotifications(account, options.json()) } } } }
     }
+    internal val extrasStore = SchoolExtrasStore(app)
+    var extras by mutableStateOf(extrasStore.read(api.profileKey ?: "demo")); private set
+    var extrasBusy by mutableStateOf(false); private set
+    fun updateExtras(value: SchoolExtras) {
+        if (accountChanging) return
+        val account = activeAccount ?: return
+        val previous = extras
+        extras = value
+        viewModelScope.launch {
+            runCatching { studyWrites.withLock { withContext(Dispatchers.IO) {
+                extrasStore.save(account, value)
+                val keep = value.floors.map { it.attachment }.toSet() + value.excuses.map { it.attachment }
+                (previous.floors.map { it.attachment } + previous.excuses.map { it.attachment }).filter { it.isNotBlank() && it !in keep }.forEach { extrasStore.remove(account, it) }
+            } } }.onFailure { toolsMessage = "A helyi mentés sikertelen: ${it.message}" }
+        }
+    }
+    fun importToolFile(uri: Uri, imported: (ToolAttachment) -> Unit) {
+        if (profileBusy || accountChanging) return
+        val account = activeAccount ?: return
+        extrasBusy = true
+        viewModelScope.launch {
+            try {
+                val attachment = withContext(Dispatchers.IO) { extrasStore.import(account, uri) }
+                if (account == activeAccount) imported(attachment)
+                else withContext(Dispatchers.IO) { extrasStore.remove(account, attachment.id) }
+            } catch (e: Exception) { toolsMessage = e.message ?: "A melléklet importálása sikertelen." }
+            finally { extrasBusy = false }
+        }
+    }
+    fun discardToolFile(id: String) {
+        val account = activeAccount ?: return
+        viewModelScope.launch(Dispatchers.IO) { runCatching { extrasStore.remove(account, id) } }
+    }
+    fun saveExcuse(record: ExcuseRecord) {
+        LocalDate.parse(record.date)
+        if (record.deadline.isNotBlank()) LocalDate.parse(record.deadline)
+        updateExtras(extras.copy(excuses = extras.excuses.filterNot { it.date == record.date } + record))
+        val id = "excuse:${record.date}"
+        val reminder = excuseReminder(record, data)
+        if (reminder != null) saveEntry(reminder)
+        else if (study.entries.any { it.id == id }) updateStudy(study.copy(entries = study.entries.map { if (it.id == id) it.copy(reminder = -1) else it }))
+    }
+    private fun notifyTimetableChanges() {
+        if (!extras.changesNotify || demo || !notificationOptions.enabled || !SchoolNotifications.canNotify(getApplication())) return
+        val pending = data?.lessonChanges.orEmpty().filter { it.id !in extras.notifiedChanges }
+        if (pending.isEmpty()) return
+        TimetableAlerts.post(getApplication(), pending)
+        updateExtras(extras.copy(notifiedChanges = (data?.lessonChanges.orEmpty().map { it.id } + extras.notifiedChanges.toList()).take(200).toSet()))
+    }
     private val studyStore = StudyStore(app)
     private val studyWrites = Mutex()
     var study by mutableStateOf(studyStore.read(api.profileKey ?: "demo")); private set
@@ -120,6 +169,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         val key = requireNotNull(api.profileKey)
         val local = withContext(Dispatchers.IO) { Triple(profiles.read(key), studyStore.read(key), studyStore.appearance(key)) }
         profile = local.first; study = local.second
+        extras = withContext(Dispatchers.IO) { extrasStore.read(key) }
         notificationOptions = NotificationOptions.parse(withContext(Dispatchers.IO) { studyStore.notifications(key) })
         SchoolNotifications.save(getApplication(), notificationOptions)
         appearance = local.third?.let { Appearance.parse(org.json.JSONObject(it)).resolveCss() } ?: Appearance()
@@ -145,7 +195,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     val busy: Boolean get() = syncOperation.busy
     val error: String? get() = syncOperation.error
     val authenticationRequired: Boolean get() = syncOperation.authenticationRequired
-    val profileBusy: Boolean get() = profileOperation.busy || accountChanging
+    val profileBusy: Boolean get() = profileOperation.busy || accountChanging || extrasBusy
     val profileError: String? get() = profileOperation.error
     internal val updates = UpdateController(app, viewModelScope)
     var date by mutableStateOf(today()); private set
@@ -212,6 +262,13 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         LessonLiveNotification.requestUpdate(getApplication())
         viewModelScope.launch { savedAccounts = withContext(Dispatchers.IO) { api.accounts() } }
         refreshPersonalIntegrations()
+        notifyTimetableChanges()
+        val entries = study.entries.map { entry ->
+            if (entry.id.startsWith("excuse:") && entry.reminder >= 0 && !excuseStillNeeded(data, entry.id.removePrefix("excuse:"))) entry.copy(reminder = -1) else entry
+        }
+        if (entries != study.entries) updateStudy(study.copy(entries = entries))
+        val excuses = extras.excuses.map { if (it.remind && !excuseStillNeeded(data, it.date)) it.copy(remind = false) else it }
+        if (excuses != extras.excuses) updateExtras(extras.copy(excuses = excuses))
         if (api.syncIssues.isNotEmpty()) {
             val names = api.syncIssues.take(3).joinToString(", ")
             val remaining = if (api.syncIssues.size > 3) " és további ${api.syncIssues.size - 3}" else ""
@@ -233,6 +290,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         date = value
         if (signedIn && !demo) work("Nem sikerült betölteni a kiválasztott hetet. A mentett órák továbbra is elérhetők.") {
             data = withContext(Dispatchers.IO) { api.getTimetableWeek(value) }
+            notifyTimetableChanges()
         }
     }
     fun startDemo() {
@@ -240,6 +298,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         demo = true; syncOperation.error = null; data = SchoolData.demo()
         profile = profiles.read("demo")
         study = studyStore.read("demo")
+        extras = extrasStore.read("demo")
     }
     fun saveProfileName(name: String) = editProfile { account ->
         val trimmed = name.trim()
@@ -266,7 +325,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
                 LessonLiveNotification.requestUpdate(getApplication())
                 getApplication<Application>().getSystemService(android.app.NotificationManager::class.java).cancelAll()
                 savedAccounts = withContext(Dispatchers.IO) { api.accounts() }
-                study = StudyState()
+                study = StudyState(); extras = SchoolExtras()
                 withContext(Dispatchers.IO) { StudyReminders.reschedule(getApplication()); hu.grafit.widgets.GrafitWidget.updateAll(getApplication()) }
                 profileOperation.error = null
                 android.webkit.CookieManager.getInstance().removeAllCookies(null)

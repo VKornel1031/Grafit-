@@ -59,7 +59,8 @@ class ToolsFlowTest {
         val statistics = compose.onNodeWithText("Statisztikák").fetchSemanticsNode().boundsInRoot
         assertEquals(planner.left, statistics.left, 1f)
         assertEquals(planner.right, statistics.right, 1f)
-        compose.onNodeWithText("Naptár").performScrollTo().performClick()
+        compose.onNodeWithTag("toolHub").performScrollToNode(hasText("Naptár"))
+        compose.onNodeWithText("Naptár").performClick()
         compose.onNodeWithText("Saját esemény").assertExists()
         compose.onNodeWithText("‹ Eszközök · Naptár").performClick()
         compose.onNodeWithText("A te iskolai eszköztárad").assertIsDisplayed()

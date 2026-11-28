@@ -7,6 +7,9 @@
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <application android:theme="@style/Theme.Grafit" android:label="Grafit" android:icon="@mipmap/ic_grafit" android:roundIcon="@mipmap/ic_grafit" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/data_extraction_rules" android:supportsRtl="true" android:usesCleartextTraffic="false">
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/school_share_paths" />
+        </provider>
         <receiver android:name=".integrations.StudyReminderReceiver" android:exported="false" />
         <receiver android:name=".widgets.WidgetClockReceiver" android:exported="false" />
         <receiver android:name=".widgets.GrafitWidget" android:label="Grafit – Mai órarend" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_timetable" /></receiver>

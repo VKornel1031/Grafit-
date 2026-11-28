@@ -123,7 +123,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         notificationOptions = NotificationOptions.parse(withContext(Dispatchers.IO) { studyStore.notifications(key) })
         SchoolNotifications.save(getApplication(), notificationOptions)
         appearance = local.third?.let { Appearance.parse(org.json.JSONObject(it)).resolveCss() } ?: Appearance()
-        prefs.edit().putString("configuration", appearance.json()).apply()
+        prefs.edit().putString("configuration", appearance.json()).putString("appearance_owner", accountHash(key)).apply()
         data = withContext(Dispatchers.IO) { api.cached() }
         savedAccounts = withContext(Dispatchers.IO) { api.accounts() }
     }
@@ -149,7 +149,7 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
     val profileError: String? get() = profileOperation.error
     internal val updates = UpdateController(app, viewModelScope)
     var date by mutableStateOf(today()); private set
-    init { viewModelScope.launch { savedAccounts = withContext(Dispatchers.IO) { api.accounts() } }; if (signedIn) syncAll(); SchoolNotifications.save(app, notificationOptions); if (checkUpdatesOnStart) updates.check() }
+    init { api.profileKey?.let { prefs.edit().putString("configuration", appearance.json()).putString("appearance_owner", accountHash(it)).apply() }; viewModelScope.launch { savedAccounts = withContext(Dispatchers.IO) { api.accounts() } }; if (signedIn) syncAll(); SchoolNotifications.save(app, notificationOptions); if (checkUpdatesOnStart) updates.check() }
     /** Bring background-fetched data into the UI without starting another network sync. */
     fun resumeLocalData() {
         if (busy || demo || !signedIn) return
@@ -160,9 +160,11 @@ class GrafitViewModel @JvmOverloads constructor(app: Application, checkUpdatesOn
         }
     }
     fun customize(value: Appearance) {
+        val previous = appearance
         val updated = value.syncCssControls(appearance).resolveCss()
         appearance = updated
-        prefs.edit().putString("configuration", updated.json()).apply()
+        prefs.edit().putString("configuration", updated.json()).putString("appearance_owner", activeAccount?.let(::accountHash)).apply()
+        if (previous.hideGrades != updated.hideGrades || previous.customCss != updated.customCss) viewModelScope.launch(Dispatchers.IO) { hu.grafit.widgets.GrafitWidget.updateAll(getApplication()) }
         activeAccount?.let { account -> viewModelScope.launch { studyWrites.withLock { withContext(Dispatchers.IO) { studyStore.saveAppearance(account, updated.json()) } } } }
     }
     private fun work(failureMessage: String = "Nem sikerült csatlakozni. Ellenőrizd a kapcsolatot, és próbáld újra.", action: suspend () -> Unit) =

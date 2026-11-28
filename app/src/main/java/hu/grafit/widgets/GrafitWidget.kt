@@ -45,6 +45,10 @@ open class GrafitWidget : AppWidgetProvider() {
                 val data = api.cached()
                 val account = api.profileKey
                 val state = account?.let { StudyStore(context).read(it) } ?: StudyState()
+                val preferences = context.getSharedPreferences("appearance", 0)
+                val configuration = if (account != null && preferences.getString("appearance_owner", null) != accountHash(account))
+                    StudyStore(context).appearance(account) ?: preferences.getString("configuration", "{}") else preferences.getString("configuration", "{}")
+                val style = runCatching { org.json.JSONObject(configuration ?: "{}") }.getOrDefault(org.json.JSONObject())
                 val time = DateTimeFormatter.ofPattern("HH:mm")
                 val now = LocalDateTime.now(schoolZone)
                 val lessons = data?.lessons.orEmpty().filter { it.hasSubject && it.state != "Elmaradt" && it.start.toLocalDate() == today() }.sortedBy { it.start }
@@ -55,13 +59,13 @@ open class GrafitWidget : AppWidgetProvider() {
                     2 -> (data.tasks.filter { it.kind in setOf("Házi feladat", "Dolgozat") && it.date >= today().toString() }
                         .map { "${it.date} · ${it.subject}: ${it.text.replace(Regex("<[^>]*>"), " ")}" } + state.entries.filter { !it.done && it.date >= today().toString() }.map { "${it.date} · ${it.title}" })
                         .sorted().take(4).joinToString("\n").ifBlank { "Nincsenek közelgő feladatok." }
-                    else -> if (!state.widgetGrades || runCatching { org.json.JSONObject(context.getSharedPreferences("appearance", 0).getString("configuration", "{}")!!).optBoolean("hide") }.getOrDefault(true)) "A jegyek rejtve vannak. Engedélyezd az Eszközök → Widgetek menüben." else data.grades.sortedByDescending { it.date }.take(4)
+                    else -> if (!state.widgetGrades || style.optBoolean("hide")) "A jegyek rejtve vannak. Engedélyezd az Eszközök → Widgetek menüben." else data.grades.sortedByDescending { it.date }.take(4)
                         .joinToString("\n") { "${it.subject}: ${it.value} · ${it.date}" }.ifBlank { "Nincsenek letöltött jegyek." }
                 }
                 val view = RemoteViews(context.packageName, R.layout.grafit_widget)
                 view.setTextViewText(R.id.widget_title, "grafit · $title")
                 view.setTextViewText(R.id.widget_body, body.take(3000))
-                val css = runCatching { org.json.JSONObject(context.getSharedPreferences("appearance", 0).getString("configuration", "{}")!!) }.getOrNull()?.optString("customCss").orEmpty()
+                val css = style.optString("customCss")
                 val primary = runCatching { hu.grafit.ui.ThemeCss.parse(css)["primary"]?.let { Color.parseColor(if (it.length == 4) "#" + it.drop(1).map { c -> "$c$c" }.joinToString("") else it) } }.getOrNull()
                 view.setTextColor(R.id.widget_title, primary ?: Color.LTGRAY)
                 val open = PendingIntent.getActivity(context, id, Intent(context, MainActivity::class.java).putExtra("tool", if (mode == 2) "planner" else if (mode == 3) "stats" else "calendar"), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)

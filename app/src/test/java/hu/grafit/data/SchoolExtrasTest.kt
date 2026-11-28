@@ -125,4 +125,18 @@ class SchoolExtrasTest {
         assertTrue(result.none { it.task == task })
     }
 
+    @Test fun firstRecapPrefersCompletedMonthAndFallsBackToImmediatePreview() {
+        val current = YearMonth.of(2026, 11)
+        assertEquals(current.minusMonths(1), preferredRecapMonth(data(listOf(grade("a", 5, "2026-10-31"))), StudyState(), current))
+        assertEquals(current, preferredRecapMonth(data(listOf(grade("b", 5, "2026-11-28"))), StudyState(), current))
+    }
+    @Test fun recapRollsToTheNewlyCompletedMonthWithoutUsingFutureRecords() {
+        val school = data(listOf(grade("old", 5, "2026-11-30"), grade("future", 1, "2027-01-01")))
+        assertEquals(YearMonth.of(2026, 11), preferredRecapMonth(school, StudyState(), YearMonth.of(2026, 12)))
+    }
+    @Test fun ownPlansCanMakeLastMonthAvailableWithoutSchoolGrades() {
+        val study = StudyState(entries = listOf(StudyEntry("own", "Terv", date = "2026-10-31", done = true)))
+        assertEquals(YearMonth.of(2026, 10), preferredRecapMonth(data(), study, YearMonth.of(2026, 11)))
+    }
+
 }

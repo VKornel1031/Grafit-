@@ -68,7 +68,7 @@ data class CatchUpItem(val key: String, val title: String, val date: String, val
 fun catchUpItems(data: SchoolData, from: LocalDate, to: LocalDate, now: LocalDate): List<CatchUpItem> {
     require(from <= to)
     val lessons = data.lessons.filter { it.hasSubject && it.state != "Elmaradt" && it.start.toLocalDate() in from..to }
-    fun identity(id: String?) = id?.substringBefore(',')?.trim()?.lowercase()?.takeIf { it.isNotBlank() && it != "0" }
+    fun identity(id: String?) = id?.substringBefore(',')?.trim()?.lowercase(java.util.Locale.ROOT)?.takeIf { it.isNotBlank() && it != "0" }
     fun related(task: SchoolTask) = lessons.any { lesson ->
         val first = identity(lesson.subjectId); val second = identity(task.subjectId)
         if (first != null && second != null) first == second else searchKey(task.subject).trim() == searchKey(lesson.subject).trim()
@@ -120,4 +120,13 @@ fun excuseReminder(record: ExcuseRecord, data: SchoolData?): StudyEntry? {
     if (!record.remind || record.status == "submitted" || record.deadline.isBlank() || !excuseStillNeeded(data, record.date)) return null
     LocalDate.parse(record.deadline)
     return StudyEntry("excuse:${record.date}", "Hiányzásigazolás határideje", date = record.deadline, time = "08:00", notes = "Hiányzás: ${record.date}", reminder = 0)
+}
+
+/** A completed month is the normal wrap; a first-install preview needs no waiting. */
+fun preferredRecapMonth(data: SchoolData?, study: StudyState, current: YearMonth): YearMonth {
+    val previous = current.minusMonths(1)
+    val dates = data?.grades.orEmpty().map { it.date } + data?.absences.orEmpty().map { it.date } +
+        data?.tasks.orEmpty().map { it.date } + study.entries.map { it.date }
+    val available = dates.any { runCatching { YearMonth.from(LocalDate.parse(it)) == previous }.getOrDefault(false) }
+    return if (available) previous else current
 }

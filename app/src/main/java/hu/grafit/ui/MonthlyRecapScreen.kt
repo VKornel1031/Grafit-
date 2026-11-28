@@ -68,10 +68,11 @@ private fun recapNumber(value: Double?) = value?.let { "%.2f".format(recapHu, it
 @Composable
 internal fun MonthlyRecapScreen(vm: GrafitViewModel) {
     val current by produceState(YearMonth.from(today())) { while (isActive) { value = YearMonth.from(today()); delay(60_000) } }
-    var selected by rememberSaveable { mutableStateOf(current.toString()) }
+    var selected by rememberSaveable { mutableStateOf<String?>(null) }
     var lastCurrent by rememberSaveable { mutableStateOf(current.toString()) }
-    LaunchedEffect(current) { if (selected == lastCurrent) selected = current.toString(); lastCurrent = current.toString() }
-    val month = YearMonth.parse(selected)
+    LaunchedEffect(current) { if (lastCurrent != current.toString()) selected = null; lastCurrent = current.toString() }
+    val preferred = remember(vm.data, vm.study, current) { preferredRecapMonth(vm.data, vm.study, current) }
+    val month = selected?.let(YearMonth::parse) ?: preferred
     val recap = remember(vm.data, vm.study, month) { vm.data?.let { monthlyRecap(it, vm.study, month) } }
     var story by rememberSaveable { mutableStateOf(false) }
     var reveal by remember(vm.activeAccount, vm.demo, vm.appearance.hideGrades) { mutableStateOf(!vm.appearance.hideGrades) }
@@ -91,7 +92,7 @@ internal fun MonthlyRecapScreen(vm: GrafitViewModel) {
             Text(if (ongoing) "Nem kell megvárnod a hónap végét. A mostanáig mentett adataidból már ma megnézheted az összefoglalót." else "Jegyek, előrelépések, határidők és saját tervek a mentett adataid alapján.")
             Button(onClick = { if (reveal) story = true else confirm = true }, enabled = recap != null, modifier = Modifier.fillMaxWidth()) { Text("Összefoglaló megnyitása") }
         } }
-        Text("Minden hónapban automatikusan új időszak indul; az összefoglaló bármelyik nap visszanézhető. A folyamatban lévő hónap az új szinkronok után frissül. Az első előzetes már ezzel a frissítéssel megnyílik.")
+        Text("Alapból az előző lezárt hónap nyílik meg, ha van hozzá mentett adat; egyébként a mostani havi előzetes. Minden hónapban automatikusan új időszak indul; az összefoglaló bármelyik nap visszanézhető. A folyamatban lévő hónap az új szinkronok után frissül. Az első előzetes már ezzel a frissítéssel megnyílik.")
         Text("Az összefoglaló kizárólag a mentett iskolai adatokból és saját terveidből készül. Nem tölt le külön adatokat, és nem állít teljes jelenléti vagy hivatalos tanulmányi kimutatást.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (recap == null) Text("Előbb töltsd le az iskolai adataidat, vagy próbáld ki bemutató módban.")
     }

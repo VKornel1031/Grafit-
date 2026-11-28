@@ -1,6 +1,6 @@
 # Grafit 2.0 – iskolai eszközök
 
-Az új funkciók az alsó navigáció **Eszközök** lapján érhetők el. A tanulási adatok, próbajegyek, célátlagok és felkészülési jegyzetek fiókonként elkülönítve, Android Keystore-kulccsal titkosítva maradnak a készüléken.
+A jegyszimulátor a **Jegyek / Tantárgyak → Mi lenne, ha?** kártyáról nyitható meg. A többi eszköz a jobb felső profilképre koppintva, az **Eszközök / Egyéb** menüpontban érhető el. Az eszközkártyák egységesen kitöltik a rendelkezésre álló szélességet. A tanulási adatok, próbajegyek, célátlagok és felkészülési jegyzetek fiókonként elkülönítve, Android Keystore-kulccsal titkosítva maradnak a készüléken.
 
 ## Mi lenne, ha? – jegyszimulátor
 

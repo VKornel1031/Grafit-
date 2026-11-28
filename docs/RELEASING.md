@@ -4,7 +4,7 @@ A Grafit első éles verziója **1.0.0**, `versionCode = 9`, címkéje `v1.0.0`.
 
 A Git-címke és a forrás közzététele nem hoz létre automatikusan letölthető APK-mellékletet. A telepítők a lent leírt, kézzel indított **Signed release** munkafolyamattal vagy ellenőrzött kézi közzététellel jelennek meg.
 
-A nyilvános stabil verziószámozás 1.0.0-ról indult; a jelenlegi verzió 2.0.0. Az Android belső verziókódja tovább nő (24). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
+A nyilvános stabil verziószámozás 1.0.0-ról indult; a jelenlegi verzió 2.0.0. Az Android belső verziókódja tovább nő (25). Azonos aláírás mellett ez megőrzi a korábbi fejlesztői 1.1.x csomagok frissíthetőségét és adatait. Ez a módosítás önmagában nem hoz létre vagy helyez át Git-címkét.
 
 ## Állandó kiadási kulcs
 
@@ -20,7 +20,7 @@ A nyilvános tanúsítvány: [release-signing-certificate.pem](release-signing-c
 
 A tulajdonos privát kulcsmentésében található a `grafit-release.p12` kulcstár és a `keystore-password.txt` jelszófájl; az alias `grafit-release`. Őrizd meg biztonságosan, a felhőkörnyezeten kívül is. Ezeket a fájlokat ne csatold GitHub Release-hez és ne add Git-verziókezeléshez. Minden későbbi kiadás ezt a kulcsot használja.
 
-A jelenlegi forrás megjelenített verziója **2.0.0**, belső `versionCode = 24`. Az új kiadási címke `v2.0.0`; a korábbi Git-címkék változatlanok. R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi példák a 2.0.0-s kiadást készítik elő.
+A jelenlegi forrás megjelenített verziója **2.0.0**, belső `versionCode = 25`. A `v2.0.0` címke a korábbi 24-es buildre mutat; a 25-ös build nem helyezi át a meglévő Git-címkéket. R8-kódoptimalizálást, erőforrás-zsugorítást és DEX-tömörítést használ; a KRÉTA-szinkron az aktuális és kiválasztott hetekre korlátozott, a többi hét igény szerint tölthető le. Az alábbi példák a 2.0.0-s kiadást készítik elő.
 
 ## Helyi, ellenőrzött kiadás
 

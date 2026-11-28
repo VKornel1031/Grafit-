@@ -72,7 +72,7 @@ internal fun ProfileBubble(vm: GrafitViewModel, expanded: Boolean, onClick: () -
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ProfileMenu(vm: GrafitViewModel, onDismiss: () -> Unit, onSettings: () -> Unit, onLogout: () -> Unit) {
+internal fun ProfileMenu(vm: GrafitViewModel, onDismiss: () -> Unit, onSettings: () -> Unit, onTools: () -> Unit, onLogout: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var name by rememberSaveable(vm.profile.displayName) { mutableStateOf(vm.profile.displayName) }
@@ -111,6 +111,9 @@ internal fun ProfileMenu(vm: GrafitViewModel, onDismiss: () -> Unit, onSettings:
             if (vm.profileBusy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 12.dp))
             vm.profileError?.let { Text(it, Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.error) }
             HorizontalDivider(Modifier.padding(vertical = 20.dp))
+            ProfileMenuAction("Eszközök / Egyéb", "Tanulási terv, statisztikák, naptár és további eszközök", Icons.Outlined.Dashboard) {
+                scope.launchAfterHiding(sheetState, onDismiss, onTools)
+            }
             ProfileMenuAction("Beállítások", "Megjelenés, animációk és képfrissítés", Icons.Outlined.Tune) {
                 scope.launchAfterHiding(sheetState, onDismiss, onSettings)
             }

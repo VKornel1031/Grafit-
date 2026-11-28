@@ -50,7 +50,7 @@ internal fun ToolsScreen(vm: GrafitViewModel, onAddAccount: () -> Unit) {
                 item { Text("A te iskolai eszköztárad", style = MaterialTheme.typography.headlineSmall) }
                 val descriptions = listOf("Próbajegyek, célátlag és ösztöndíj", "Saját feladatok, tanulási blokkok és emlékeztetők", "Havi trendek, tantárgyak és hiányzások",
                     "Órák, határidők, saját események és Google Naptár", "Titkosított, külön tárolt KRÉTA-fiókok", "Keresés az összes mentett iskolai adatban", "Jegyzetek, tananyag és felkészülési lista", "Android-kezdőképernyős widgetek")
-                items(toolTitles.entries.toList()) { entry -> GrafitCard(onClick = { tool = entry.key }) {
+                items(toolTitles.entries.filter { it.key != "simulator" }) { entry -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { tool = entry.key }) {
                     Column(Modifier.padding(20.dp)) { Text(entry.value, style = MaterialTheme.typography.titleMedium); Text(descriptions[toolTitles.keys.indexOf(entry.key)], style = MaterialTheme.typography.bodySmall) }
                 } }
             }
@@ -59,7 +59,7 @@ internal fun ToolsScreen(vm: GrafitViewModel, onAddAccount: () -> Unit) {
 }
 
 @Composable
-private fun SimulatorScreen(vm: GrafitViewModel) {
+internal fun SimulatorScreen(vm: GrafitViewModel) {
     val data = vm.data ?: return
     var reveal by remember { mutableStateOf(!vm.appearance.hideGrades) }
     if (!reveal) { Button(onClick = { reveal = true }, modifier = Modifier.padding(20.dp)) { Text("Jegyszimulátor felfedése") }; return }
@@ -124,7 +124,7 @@ private fun PlannerScreen(vm: GrafitViewModel) {
             if (entries.isEmpty()) item { Text("Nincs saját terv.", style = MaterialTheme.typography.bodySmall) }
             items(entries, key = { it.id }) { entry -> EntryRow(entry, { vm.toggleEntry(entry.id) }, { editor = entry }) }
             items(vm.data?.tasks.orEmpty().filter { it.date == day.toString() && it.kind in setOf("Házi feladat", "Dolgozat") }) { task ->
-                GrafitCard { Column(Modifier.padding(14.dp)) {
+                GrafitCard(modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp)) {
                     Text("KRÉTA · ${task.kind} · ${task.subject}", fontWeight = FontWeight.Medium)
                     Text(plain(task.text), maxLines = 3)
                     TextButton(onClick = { editor = newEntry(day).copy(title = "${task.kind}: ${task.subject}".take(160), subject = task.subject, notes = plain(task.text), kind = "study", examKey = if (task.kind == "Dolgozat") taskKey(task) else "") }) { Text("Tanulást tervezek hozzá") }
@@ -137,7 +137,7 @@ private fun PlannerScreen(vm: GrafitViewModel) {
 private fun newEntry(day: LocalDate = today()) = StudyEntry(UUID.randomUUID().toString(), "", date = day.toString())
 @Composable
 private fun EntryRow(entry: StudyEntry, onToggle: () -> Unit, onEdit: () -> Unit) {
-    GrafitCard(onClick = onEdit) { Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = onEdit) { Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Checkbox(entry.done, { onToggle() })
         Column(Modifier.weight(1f)) { Text(entry.title, fontWeight = FontWeight.Medium); Text("${entry.time} · ${entry.subject} · ${entry.minutes} perc", style = MaterialTheme.typography.bodySmall) }
         Text("›")
@@ -264,7 +264,7 @@ private fun CalendarScreen(vm: GrafitViewModel) {
         val rangeEnd = if (mode == "week") rangeStart.plusDays(7) else rangeStart.plusDays(1)
         val shown = all.filter { it.start.toLocalDate() >= rangeStart && it.start.toLocalDate() < rangeEnd }
         if (shown.isEmpty()) item { Text("Erre az időszakra nincs mentett esemény.") }
-        items(shown, key = { it.key }) { item -> GrafitCard(onClick = { detail = item }) { Column(Modifier.padding(16.dp)) {
+        items(shown, key = { it.key }) { item -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { detail = item }) { Column(Modifier.padding(16.dp)) {
             Text(item.title, fontWeight = FontWeight.Medium)
             Text("${item.start.toLocalDate()} · ${if (item.allDay) "Egész nap" else item.start.toLocalTime().toString()} · ${item.kind}", style = MaterialTheme.typography.bodySmall)
         } } }
@@ -316,7 +316,7 @@ private fun AccountsScreen(vm: GrafitViewModel, addAccount: () -> Unit) {
             Text("A fiókok munkamenete és gyorsítótára külön, titkosítva marad a készüléken. A háttérértesítések és widgetek az aktív fiókot használják.")
             Button(onClick = addAccount, enabled = !vm.busy && !vm.profileBusy) { Text("Másik KRÉTA-fiók hozzáadása") }
         }
-        items(vm.savedAccounts, key = { it.first }) { (key, name) -> GrafitCard { Column(Modifier.padding(16.dp)) {
+        items(vm.savedAccounts, key = { it.first }) { (key, name) -> GrafitCard(modifier = Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
             Text(name, style = MaterialTheme.typography.titleMedium)
             Text(key.substringBefore(':'), style = MaterialTheme.typography.bodySmall)
             if (key == vm.activeAccount && !vm.demo) Text("Aktív fiók", color = MaterialTheme.colorScheme.primary)
@@ -348,7 +348,7 @@ private fun SearchScreen(vm: GrafitViewModel) {
             Text("Helyi keresés a mentett adatokban. A jegyértékek rejtéskor nem szerepelnek a találatok címében.", style = MaterialTheme.typography.bodySmall)
         }
         if (hits.isEmpty()) item { Text(if (query.isBlank()) "Írj be keresőkifejezést." else "Nincs találat a mentett adatokban.") }
-        items(hits) { hit -> GrafitCard(onClick = { selected = hit }) { Column(Modifier.padding(14.dp)) {
+        items(hits) { hit -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { selected = hit }) { Column(Modifier.padding(14.dp)) {
             Text(if (hit.grade != null && vm.appearance.hideGrades) hit.grade.subject else hit.title, style = MaterialTheme.typography.titleMedium)
             Text("${hit.kind} · ${hit.date}", style = MaterialTheme.typography.labelSmall)
             Text(plain(hit.body), maxLines = 2)
@@ -378,7 +378,7 @@ private fun PreparationScreen(vm: GrafitViewModel) {
         if (exam == null) {
             val exams = vm.data?.tasks.orEmpty().filter { it.kind == "Dolgozat" }.sortedWith(compareBy<SchoolTask> { it.date < today().toString() }.thenBy { it.date })
             if (exams.isEmpty()) item { Text("Nincs letöltött bejelentett dolgozat. Saját felkészülést a Tanulási tervben is létrehozhatsz.") }
-            items(exams) { task -> GrafitCard(onClick = { selected = task }) { Column(Modifier.padding(16.dp)) { Text(task.subject, fontWeight = FontWeight.Medium); Text("${task.date} · ${plain(task.text)}") } } }
+            items(exams) { task -> GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = { selected = task }) { Column(Modifier.padding(16.dp)) { Text(task.subject, fontWeight = FontWeight.Medium); Text("${task.date} · ${plain(task.text)}") } } }
         } else {
             item {
                 TextButton(onClick = { selected = null }) { Text("‹ Dolgozatok") }

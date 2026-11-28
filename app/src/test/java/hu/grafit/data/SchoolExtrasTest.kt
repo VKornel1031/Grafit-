@@ -119,4 +119,10 @@ class SchoolExtrasTest {
         assertNotNull(excuseReminder(record, mixed))
     }
 
+    @Test fun unrelatedLegacyLessonCannotOverrideAnExplicitSubjectIdentityMismatch() {
+        val task = SchoolTask("Matematika", "Dolgozat", "Más csoport", day.plusDays(1).toString(), id = "test", subjectId = "99")
+        val result = catchUpItems(data(lessons = listOf(lesson().copy(subjectId = "42"), lesson("english", subject = "Angol")), tasks = listOf(task)), day, day, day)
+        assertTrue(result.none { it.task == task })
+    }
+
 }

@@ -68,11 +68,10 @@ data class CatchUpItem(val key: String, val title: String, val date: String, val
 fun catchUpItems(data: SchoolData, from: LocalDate, to: LocalDate, now: LocalDate): List<CatchUpItem> {
     require(from <= to)
     val lessons = data.lessons.filter { it.hasSubject && it.state != "Elmaradt" && it.start.toLocalDate() in from..to }
-    val subjects = lessons.map { searchKey(it.subject).trim() }.toSet()
     fun identity(id: String?) = id?.substringBefore(',')?.trim()?.lowercase()?.takeIf { it.isNotBlank() && it != "0" }
     fun related(task: SchoolTask) = lessons.any { lesson ->
         val first = identity(lesson.subjectId); val second = identity(task.subjectId)
-        if (first != null && second != null) first == second else searchKey(task.subject).trim() in subjects
+        if (first != null && second != null) first == second else searchKey(task.subject).trim() == searchKey(lesson.subject).trim()
     }
     return (lessons.map { CatchUpItem("lesson:${it.id}", it.subject, it.start.toLocalDate().toString(), it.topic.ifBlank { "A letöltött órán nincs megadva tananyag." }, lesson = it) } +
         data.tasks.filter { task -> runCatching { LocalDate.parse(task.date) }.getOrNull()?.let { date ->

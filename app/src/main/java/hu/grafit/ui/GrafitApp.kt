@@ -21,6 +21,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -43,6 +45,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.onSizeChanged
 import hu.grafit.data.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -98,6 +104,11 @@ private fun AppContent(vm: GrafitViewModel) {
     val launchActivity = androidx.activity.compose.LocalActivity.current
     var tools by rememberSaveable { mutableStateOf(false) }
     var simulator by rememberSaveable { mutableStateOf(false) }
+    var simulatorSubject by rememberSaveable { mutableStateOf<String?>(null) }
+    var subject by rememberSaveable { mutableStateOf<String?>(null) }
+    val gradeListState = rememberLazyListState()
+    var floatingBarHeight by remember { mutableStateOf(72.dp) }
+    val density = LocalDensity.current
     LaunchedEffect(Unit) { if (launchActivity?.intent?.hasExtra("tool") == true) tools = true }
     fun navigate(target: Page) {
         if (vm.appearance.haptics) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -132,11 +143,17 @@ private fun AppContent(vm: GrafitViewModel) {
             settings -> settings = false
             login -> login = false
             simulator -> simulator = false
+            subject != null -> subject = null
             tools -> tools = false
             else -> navigate(Page.Home)
         }
     }
-    BackHandler(settings || login || tools || simulator || page != Page.Home) { goBack() }
+    BackHandler(settings || login || tools || simulator || subject != null || page != Page.Home) { goBack() }
+    val showNavigation = active && !settings && !login && !tools && !simulator && subject == null
+    val floatingNavigation = showNavigation && vm.appearance.pillNavigation
+    val bottomInset = if (floatingNavigation) floatingBarHeight + 24.dp else 0.dp
+    val visiblePages = Page.entries.filter { (it != Page.Grades || vm.appearance.showGrades) &&
+        (it != Page.Absences || vm.appearance.showAbsences) }
     Scaffold(
         topBar = {
             val pill = vm.appearance.pillToolbar
@@ -145,9 +162,9 @@ private fun AppContent(vm: GrafitViewModel) {
                 color = if (pill) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.surface,
                 shadowElevation = if (pill) 2.dp else 0.dp) {
             TopAppBar(windowInsets = if (pill) WindowInsets(0, 0, 0, 0) else TopAppBarDefaults.windowInsets,
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent), title = { Text(if (settings) "Megjelenés" else if (login) "KRÉTA bejelentkezés" else if (simulator) "Mi lenne, ha?" else if (tools) "Eszközök / Egyéb" else "grafit",
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent), title = { Text(if (settings) "Megjelenés" else if (login) "KRÉTA bejelentkezés" else if (simulator) "Mi lenne, ha?" else if (subject != null) "Tantárgy" else if (tools) "Eszközök / Egyéb" else "grafit",
                 fontWeight = FontWeight.SemiBold) }, navigationIcon = {
-                if (settings || login || tools || simulator) IconButton(onClick = { goBack() }) {
+                if (settings || login || tools || simulator || subject != null) IconButton(onClick = { goBack() }) {
                     Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Vissza") }
             }, actions = {
                 if (active && !settings && !login) {
@@ -157,24 +174,18 @@ private fun AppContent(vm: GrafitViewModel) {
             })
             }
         }, bottomBar = {
-            if (active && !settings && !login && !tools && !simulator) {
-            val pill = vm.appearance.pillNavigation
-            Surface(modifier = if (pill) Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp) else Modifier,
-                shape = if (pill) CircleShape else RoundedCornerShape(0.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            NavigationBar(containerColor = Color.Transparent, tonalElevation = 0.dp,
-                windowInsets = if (pill) WindowInsets(0, 0, 0, 0) else NavigationBarDefaults.windowInsets) {
-                Page.entries.filter { (it != Page.Grades || vm.appearance.showGrades) &&
-                    (it != Page.Absences || vm.appearance.showAbsences) }.forEach { item ->
-                    NavigationBarItem(selected = page == item, onClick = { navigate(item) },
-                        icon = { Icon(item.icon, if (!vm.appearance.navigationLabels && page != item) item.title else null) },
-                        alwaysShowLabel = vm.appearance.navigationLabels, label = { Text(item.title) })
+            if (showNavigation && !vm.appearance.pillNavigation) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
+                    visiblePages.forEach { item ->
+                        NavigationBarItem(selected = page == item, onClick = { navigate(item) },
+                            icon = { Icon(item.icon, if (!vm.appearance.navigationLabels && page != item) item.title else null) },
+                            alwaysShowLabel = vm.appearance.navigationLabels, label = { Text(item.title) })
+                    }
                 }
-            }
-            }
             }
         }
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             Column(Modifier.fillMaxSize()) {
                 vm.error?.let { error ->
                     Surface(color = MaterialTheme.colorScheme.errorContainer) {
@@ -192,20 +203,24 @@ private fun AppContent(vm: GrafitViewModel) {
                     !active -> "welcome"
                     settings -> "settings"
                     simulator -> "simulator"
+                    subject != null -> "subject"
                     tools -> "tools"
                     else -> "content"
                 }
-                AnimatedContent(targetState = route, modifier = Modifier.weight(1f), label = "screenTransition",
+                AnimatedContent(targetState = route to subject, contentKey = { it.first }, modifier = Modifier.weight(1f), label = "screenTransition",
                     transitionSpec = {
                         ((fadeIn(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) +
                             slideInVertically(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeOut)) { it * 4 / 100 }) togetherWith
                             (fadeOut(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) +
                             slideOutVertically(tween(FirkaMotion.exitMillis, easing = FirkaMotion.easeIn)) { it * 4 / 100 })).using(null)
-                    }) { currentRoute ->
+                    }) { (currentRoute, currentSubject) ->
                     when (currentRoute) {
                         "welcome" -> Welcome(vm, onLogin = { openLogin() })
                         "settings" -> Settings(vm, onLogout = { logoutDialog = true })
-                        "simulator" -> SimulatorScreen(vm)
+                        "simulator" -> SimulatorScreen(vm, initialSubject = simulatorSubject)
+                        "subject" -> SubjectScreen(vm, currentSubject.orEmpty(), onSimulator = {
+                            simulatorSubject = currentSubject; simulator = true
+                        })
                         "tools" -> ToolsScreen(vm, onAddAccount = { openLogin() })
                         else -> Column(Modifier.fillMaxSize()) {
                             if (vm.demo) Text("Bemutató mód · mintaadatok", Modifier.fillMaxWidth()
@@ -213,14 +228,26 @@ private fun AppContent(vm: GrafitViewModel) {
                                 style = MaterialTheme.typography.labelMedium)
                             HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { it }) { index ->
                                 when (Page.entries[index]) {
-                                    Page.Home -> Home(vm, { navigate(Page.Timetable) }, { navigate(Page.Grades) })
-                                    Page.Timetable -> Timetable(vm)
-                                    Page.Grades -> Grades(vm, onSimulator = { simulator = true })
-                                    Page.Absences -> Absences(vm)
+                                    Page.Home -> Home(vm, { navigate(Page.Timetable) }, { navigate(Page.Grades) }, bottomInset)
+                                    Page.Timetable -> Timetable(vm, bottomInset)
+                                    Page.Grades -> Grades(vm, gradeListState, bottomInset,
+                                        onSimulator = { simulatorSubject = null; simulator = true }, onSubject = { subject = it })
+                                    Page.Absences -> Absences(vm, bottomInset)
                                 }
                             }
                         }
                     }
+                }
+            }
+            if (floatingNavigation) {
+                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center) {
+                    FloatingNavigation(
+                        destinations = visiblePages.map { it.title to it.icon }, selected = visiblePages.indexOf(page),
+                        labels = vm.appearance.navigationLabels, onSelect = { navigate(visiblePages[it]) },
+                        modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth().onSizeChanged {
+                            floatingBarHeight = with(density) { it.height.toDp() }
+                        })
                 }
             }
             // Draw above the content without participating in its vertical layout.
@@ -228,34 +255,11 @@ private fun AppContent(vm: GrafitViewModel) {
         }
     }
     if (profileMenu && active) ProfileMenu(vm, onDismiss = { profileMenu = false },
-        onSettings = { settings = true }, onTools = { simulator = false; tools = true }, onLogout = { logoutDialog = true })
+        onSettings = { settings = true }, onTools = { simulator = false; subject = null; tools = true }, onLogout = { logoutDialog = true })
     if (logoutDialog) AlertDialog(onDismissRequest = { logoutDialog = false }, title = { Text("Kijelentkezés?") },
         text = { Text("A mentett munkamenet és az iskolai adatok törlődnek erről az eszközről.") },
         confirmButton = { TextButton(onClick = { vm.logout(); settings = false; logoutDialog = false }) { Text("Kijelentkezés") } },
         dismissButton = { TextButton(onClick = { logoutDialog = false }) { Text("Mégse") } })
-}
-
-@Composable
-private fun Welcome(vm: GrafitViewModel, onLogin: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp), verticalArrangement = Arrangement.Center) {
-        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.primaryContainer) {
-            Icon(Icons.Outlined.AutoStories, null, Modifier.padding(24.dp).size(48.dp), tint = MaterialTheme.colorScheme.primary)
-        }
-        Spacer(Modifier.height(32.dp))
-        Text("Az iskolád.\nA te ritmusod.", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(16.dp))
-        Text("Órarend, jegyek és hiányzások egy nyugodtabb, személyre szabható felületen.",
-            style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(40.dp))
-        Button(onClick = onLogin, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) { Text("Bejelentkezés KRÉTA-fiókkal") }
-        vm.savedAccounts.forEach { (key, name) ->
-            TextButton(onClick = { vm.switchAccount(key) }, enabled = !vm.busy) { Text("Belépés mentett fiókkal: $name") }
-        }
-        OutlinedButton(onClick = vm::startDemo, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().padding(top = 12.dp).heightIn(min = 56.dp)) { Text("Kipróbálom mintaadatokkal") }
-        Spacer(Modifier.height(24.dp))
-        Text("A bejelentkezés a KRÉTA saját oldalán történik. A Grafit nem tárolja a jelszavadat.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
 }
 
 @Composable
@@ -277,7 +281,7 @@ private fun Empty(message: String) {
     Text(message, Modifier.fillMaxWidth().padding(vertical = 24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 @Composable
-private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit) {
+private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit, bottomInset: Dp) {
     val data = vm.data
     var selectedMessage by remember { mutableStateOf<SchoolTask?>(null) }
     val now by produceState(LocalDateTime.now(schoolZone)) {
@@ -293,7 +297,7 @@ private fun Home(vm: GrafitViewModel, timetable: () -> Unit, grades: () -> Unit)
     val recent = remember(data?.grades) { data?.grades.orEmpty().sortedByDescending { it.date }.take(3) }
     val tasks = remember(data?.tasks) { data?.tasks.orEmpty().sortedByDescending { it.date } }
     FirkaLoadedContent(loaded = data != null) {
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + bottomInset), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
             Heading("Szia, ${vm.profile.displayName.ifBlank { vm.displayName.substringAfterLast(' ') }}!", today().format(dateFormat).replaceFirstChar { it.uppercase(hu) })
             if (!data?.school.isNullOrBlank()) Text(data!!.school, style = MaterialTheme.typography.bodyMedium,
@@ -407,7 +411,7 @@ private fun LessonRow(lesson: Lesson, a: Appearance, tasks: List<SchoolTask>) {
     if (details) LessonDetailDialog(lesson, tasks) { details = false }
 }
 @Composable
-private fun GradeRow(grade: Grade, a: Appearance) {
+internal fun GradeRow(grade: Grade, a: Appearance) {
     var revealed by remember(grade.id, a.hideGrades) { mutableStateOf(!a.hideGrades) }
     var expanded by remember(grade.id) { mutableStateOf(false) }
     val flip by animateFloatAsState(if (revealed) 0f else 180f,
@@ -433,7 +437,7 @@ private fun GradeRow(grade: Grade, a: Appearance) {
     }
 }
 @Composable
-private fun Timetable(vm: GrafitViewModel) {
+private fun Timetable(vm: GrafitViewModel, bottomInset: Dp) {
     val date = vm.date
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Heading("Órarend", date.format(DateTimeFormatter.ofPattern("yyyy. MMMM", hu)))
@@ -466,7 +470,7 @@ private fun Timetable(vm: GrafitViewModel) {
                 slideOutHorizontally(tween(FirkaMotion.enterMillis, easing = FirkaMotion.easeInOut)) { -it * direction }).using(null)
         }) { shownDate ->
             val shownLessons = vm.data?.lessons.orEmpty().filter { it.start.toLocalDate() == shownDate }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 20.dp + bottomInset)) {
                 if (shownLessons.none { it.hasSubject && it.state != "Elmaradt" }) item { Empty("Ezen a napon nincsenek tanóráid a letöltött órarend szerint.") }
                 items(shownLessons) { LessonRow(it, vm.appearance, vm.data?.tasks.orEmpty()) }
             }
@@ -474,8 +478,8 @@ private fun Timetable(vm: GrafitViewModel) {
     }
 }
 @Composable
-private fun Grades(vm: GrafitViewModel, onSimulator: () -> Unit) {
-    var selectedSubject by rememberSaveable { mutableStateOf<String?>(null) }
+private fun Grades(vm: GrafitViewModel, listState: LazyListState, bottomInset: Dp,
+                   onSimulator: () -> Unit, onSubject: (String) -> Unit) {
     val subjects = remember(vm.data) {
         val collator = java.text.Collator.getInstance(hu)
         vm.data?.gradeSummaries().orEmpty().sortedWith { a, b -> collator.compare(a.name, b.name) }
@@ -484,7 +488,7 @@ private fun Grades(vm: GrafitViewModel, onSimulator: () -> Unit) {
     val scholarship = technikumScholarshipEstimate(yearly)
     val hidden = vm.appearance.hideGrades
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier = Modifier.testTag("subjects"), state = listState, contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + bottomInset), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Heading("Jegyeid", "Tantárgyak és átlagok") }
         item {
             GrafitCard(modifier = Modifier.fillMaxWidth(), onClick = onSimulator) {
@@ -502,8 +506,7 @@ private fun Grades(vm: GrafitViewModel, onSimulator: () -> Unit) {
             val name = summary.name
             val grades = summary.grades
             item(key = "subject:$name") {
-                val expanded = selectedSubject == name
-                GrafitCard(modifier = Modifier.animateItem(), onClick = { selectedSubject = if (expanded) null else name }) {
+                GrafitCard(modifier = Modifier.animateItem(), onClick = { onSubject(name) }) {
                     Row(Modifier.fillMaxWidth().padding(if (vm.appearance.compact) 12.dp else 18.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
@@ -514,14 +517,9 @@ private fun Grades(vm: GrafitViewModel, onSimulator: () -> Unit) {
                         Text(if (hidden) "••" else average(grades)?.let { "%.2f".format(hu, roundedGradeAverage(it)) } ?: "—",
                             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary)
-                        Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                            if (expanded) "Jegyek összecsukása" else "Jegyek megnyitása")
+                        Icon(Icons.Outlined.ChevronRight, "Tantárgy megnyitása")
                     }
                 }
-            }
-            if (selectedSubject == name) {
-                if (grades.isEmpty()) item(key = "empty:$name") { Empty("Ebből a tantárgyból még nincs jegy.") }
-                items(grades.sortedByDescending { it.date }) { GradeRow(it, vm.appearance) }
             }
         }
         item {
@@ -560,9 +558,9 @@ private fun GradeSummaryWidget(label: String, value: String, description: String
     }
 }
 @Composable
-private fun Absences(vm: GrafitViewModel) {
+private fun Absences(vm: GrafitViewModel, bottomInset: Dp) {
     val all = vm.data?.absences.orEmpty()
-    LazyColumn(contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + bottomInset), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { Heading("Hiányzások") }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

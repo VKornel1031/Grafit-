@@ -59,12 +59,14 @@ internal fun ToolsScreen(vm: GrafitViewModel, onAddAccount: () -> Unit) {
 }
 
 @Composable
-internal fun SimulatorScreen(vm: GrafitViewModel) {
+internal fun SimulatorScreen(vm: GrafitViewModel, initialSubject: String? = null) {
     val data = vm.data ?: return
     var reveal by remember { mutableStateOf(!vm.appearance.hideGrades) }
     if (!reveal) { Button(onClick = { reveal = true }, modifier = Modifier.padding(20.dp)) { Text("Jegyszimulátor felfedése") }; return }
     val subjects = remember(data) { data.gradeSummaries() }
-    var selected by rememberSaveable { mutableStateOf(subjects.firstOrNull()?.name.orEmpty()) }
+    var selected by rememberSaveable(initialSubject, vm.activeAccount) {
+        mutableStateOf(subjects.firstOrNull { it.name == initialSubject }?.name ?: subjects.firstOrNull()?.name.orEmpty())
+    }
     var number by rememberSaveable { mutableIntStateOf(5) }
     var weight by rememberSaveable { mutableFloatStateOf(100f) }
     var target by remember(selected) { mutableFloatStateOf(vm.study.goals[selected]?.toFloat() ?: 4f) }

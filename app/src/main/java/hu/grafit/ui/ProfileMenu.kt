@@ -73,13 +73,14 @@ internal fun ProfileBubble(vm: GrafitViewModel, expanded: Boolean, onClick: () -
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ProfileMenu(vm: GrafitViewModel, onDismiss: () -> Unit, onSettings: () -> Unit, onTools: () -> Unit, onLogout: () -> Unit) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val scope = rememberCoroutineScope()
     var name by rememberSaveable(vm.profile.displayName) { mutableStateOf(vm.profile.displayName) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) vm.updateProfilePhoto(uri)
     }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState,
+        modifier = Modifier.padding(horizontal = 8.dp),
         containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 4.dp) {
         Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp).padding(bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {

@@ -22,7 +22,7 @@ class GrafitFlowTest {
         compose.onNodeWithText("Hiányzások").performClick()
         compose.onNodeWithText("Igazolatlan").assertIsDisplayed()
         compose.onNodeWithContentDescription("Profil megnyitása").performClick()
-        compose.onNodeWithText("Beállítások").performClick()
+        compose.onNodeWithText("Beállítások").performScrollTo().performClick()
         compose.onNodeWithText("Legyen a tiéd.").assertIsDisplayed()
         compose.onNodeWithText("Sötét").performClick()
         compose.onNodeWithText("Sötét").assertIsSelected()

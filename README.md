@@ -63,7 +63,7 @@ Az élő tanórai értesítés a helyi órarend alapján számol vissza. A szám
 
 ## Újdonságok a 2.0-ban
 
-A **Jegyek → Mi lenne, ha?** kártyán próbajegyekkel tervezheted a célátlagot. A jobb felső profilmenü **Eszközök / Egyéb** pontjából saját tanulási blokkokat és emlékeztetőket hozhatsz létre, statisztikákat nézhetsz, dolgozatokra készülhetsz és kereshetsz a mentett adatokban. A saját tervek és jegyzetek fiókonként, titkosítva maradnak a készüléken.
+A **Jegyek → Mi lenne, ha?** kártyán próbajegyekkel tervezheted a célátlagot. A tantárgyak külön oldalon, időrendi jegygrafikonnal és az adott tárgyra előkészített szimulátorral nyílnak meg. A jobb felső profilmenü **Eszközök / Egyéb** pontjából saját tanulási blokkokat és emlékeztetőket hozhatsz létre, statisztikákat nézhetsz, dolgozatokra készülhetsz és kereshetsz a mentett adatokban. A saját tervek és jegyzetek fiókonként, titkosítva maradnak a készüléken.
 
 A közös naptár órákat, határidőket és saját eseményeket mutat. Külön engedéllyel, választott kategóriákból exportálhat a telefonon lévő Google-naptárba; a felhőszinkront az Android Google-fiókja végzi. Ez egyirányú kapcsolat, és csak a következő 90 nap mentett adataira vonatkozik. Több fiók között új bejelentkezés nélkül válthatsz; a háttérfunkciók az aktív fiókot használják. Négy Android-kezdőképernyős widget is hozzáadható.
 

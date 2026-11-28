@@ -2,6 +2,10 @@
 
 A jegyszimulátor a **Jegyek / Tantárgyak → Mi lenne, ha?** kártyáról nyitható meg. A többi eszköz a jobb felső profilképre koppintva, az **Eszközök / Egyéb** menüpontban érhető el. Az eszközkártyák egységesen kitöltik a rendelkezésre álló szélességet. A tanulási adatok, próbajegyek, célátlagok és felkészülési jegyzetek fiókonként elkülönítve, Android Keystore-kulccsal titkosítva maradnak a készüléken.
 
+## Tantárgyak és jegygrafikon
+
+A Jegyek lapon egy tantárgyra koppintva külön részletes oldal nyílik. Felül a név és az átlag, alatta az 1–5 közötti számszerű jegyek időrendi grafikonja, a **Mi lenne, ha?** gomb és az összes jegy látható. A szöveges értékelések a listában maradnak, de a grafikonra nem kerülnek. Rejtett jegyeknél a grafikont külön kell felfedni. A tantárgyoldalról megnyitott szimulátor eleve az adott tárgyat választja ki; visszalépéskor a tantárgyoldalra jutsz.
+
 ## Mi lenne, ha? – jegyszimulátor
 
 Válassz egy tantárgyat, próbajegyet és súlyt, majd add hozzá a számításhoz. Megjelenik az eredeti és a próbált tantárgyi átlag, az éves átlag és az ösztöndíjbecslés. A próbajegyek külön törölhetők, vagy egyszerre üríthetők. Nem kerülnek a KRÉTA-ba, és nem módosítják az iskolai jegyeket.
